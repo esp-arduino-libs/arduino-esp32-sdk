@@ -1,28 +1,36 @@
 # arduino-esp32-sdk
 
-This repository is used to store specially recompiled libraries for the [arduino-esp32](https://github.com/espressif/arduino-esp32) SDK.  And the libraries in this repository are compiled from the [esp-arduino-libs/esp32-arduino-lib-builder](https://github.com/esp-arduino-libs/esp32-arduino-lib-builder). For more details about compilation instructions, please refer to the [documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/lib_builder.html).
+This repository hosts specially recompiled libraries for the [arduino-esp32](https://github.com/espressif/arduino-esp32) SDK. These libraries are compiled from the [esp-arduino-libs/esp32-arduino-lib-builder](https://github.com/esp-arduino-libs/esp32-arduino-lib-builder). For detailed compilation instructions, please consult the [documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/lib_builder.html).
 
 ## Features
 
-In comparison to the original arduino-esp32 SDK, this repository has made adjustments to certain sdkconfig configurations during compilation. If need to change more configurations, can modify the files in folder *configs* of [esp-arduino-libs/esp32-arduino-lib-builder](https://github.com/esp-arduino-libs/esp32-arduino-lib-builder) and refer to its README to compile.
+In comparison to the original arduino-esp32 SDK, this repository makes adjustments to certain sdkconfig configurations before compilation. If you need to change more configurations, you can modify the files in the *configs* folder of [esp-arduino-libs/esp32-arduino-lib-builder](https://github.com/esp-arduino-libs/esp32-arduino-lib-builder) and refer to its README for compilation details.
 
 ### For releases suffixed with "-d"
 
-The SDK changes the default log level to **DEBUG** by enabling `CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y`. This is to increase the amount of log messages printed to the serial console and help debug the application.
+The SDK changes the default log level to **DEBUG** by enabling `CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y`. This increases the number of log messages printed to the serial console to aid in debugging applications.
 
-**Important Note**: The released SDKs suffixed with "-d" in this repository are only for debuging. For production purposes, please use the [arduino-esp32 official releases](https://github.com/espressif/arduino-esp32/releases) instead.
+**Important Note**: The SDKs released with the "-d" suffix are only for debugging. For production purposes, please use the [official releases](https://github.com/espressif/arduino-esp32/releases) of arduino-esp32.
 
-## Dependencies Version
+### For releases suffixed with "-h"
 
-| releases  | esp32-arduino-lib-builder |      esp-idf      | arduino-esp32 | esp-dl  | esp-rainmaker |   esp-camera   |  esp-littlefs  |    esp-dsp     |  tinyusb  | esp_secure_cert_mgr |
-| :-------: | :-----------------------: | :---------------: | :-----------: | :-----: | :-----------: | :------------: | :------------: | :------------: | :-------: | :-----------------: |
-| v2.0.13-d |       debug/v2.0.13       | v4.4.5 ac5d805d0e |   447f6db6    | 0632d24 |    b001a86    | v2.0.4 e689c3b | v1.5.5 9eeac09 | v1.4.0 8997ed9 | 39a64334a |   registry v2.2.1   |
+The SDK changes some configurations and can achieve higher performance in some cases, especially for avoiding [screen drifting](https://docs.espressif.com/projects/esp-faq/en/latest/software-framework/peripherals/lcd.html#why-do-i-get-drift-overall-drift-of-the-display-when-esp32-s3-is-driving-an-rgb-lcd-screen) when using RGB LCDs.
 
-## How to use
+* It changes the optimization level from `-Os` to `-O2` by enabling `CONFIG_COMPILER_OPTIMIZATION_PERF=y`.
+* It increases the size of the data cache line from `32` to `64` by enabling `CONFIG_ESP32S3_DATA_CACHE_LINE_64B=y`.
+* It enables the function **XIP on PSRAM** by enabling `CONFIG_SPIRAM_FETCH_INSTRUCTIONS=y` and `CONFIG_SPIRAM_RODATA=y`.
 
-To use the released SDKs in this repository for Arduino IDE, please follow the below steps:
+## How to Use
 
-1. Check the version of the using arduino-esp32. It can be found in the Arduino IDE under `Tools > Board > Boards Manager > esp32`.
-2. Check if the version of the using arduino-esp32 is the same as the version of the released SDKs in this repository.
-3. If yes, directly download the released SDKs in this repository and replace the corresponding libraries in the arduino-esp32 sdk. (For windows, the default path is `C:\Users\<user name>\AppData\Local\Arduino15\packages\esp32`. For Linux, the default path is `~/.arduino15/packages/esp32`)
-4. If not, please open a issue in this repository to request a new release, or refer to the [documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/lib_builder.html) to compile.
+To use the released SDKs from this repository in the Arduino IDE, follow these steps:
+
+1. Check the version of the arduino-esp32 in use. It can be found in the Arduino IDE under `Tools > Board > Boards Manager > esp32`.
+2. Ensure that the version of arduino-esp32 matches the version of the released SDKs in this repository.
+3. If yes, download the released SDKs from this repository and replace the corresponding libraries in the arduino-esp32 SDK
+    * For different operating systems, the default root path of the arduino-esp32 SDK is different:
+        * For Windows, the default path is `C:\Users\<user name>\AppData\Local\Arduino15\packages\esp32`.
+        * For Linux, the default path is `~/.arduino15/packages/esp32`.
+    * For different versions of arduino-esp32, the default path of the SDK libraries are different:
+        * For arduino-esp32 v2.x.x, the default path is `hardware > esp32 > 2.x.x > tools > sdk`.
+        * For arduino-esp32 v3.x.x, the default path is `tools > idf-release_x`.
+4. If not, open an issue in this repository to request a new release or refer to the [documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/lib_builder.html) for compilation instructions.
