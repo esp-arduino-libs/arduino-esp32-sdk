@@ -13,6 +13,7 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 #include "soc/soc_caps.h"
+#include "soc/clk_tree_defs.h"
 
 typedef enum {
 #if SOC_LEDC_SUPPORT_HS_MODE
@@ -34,41 +35,51 @@ typedef enum {
     LEDC_DUTY_DIR_MAX,
 } ledc_duty_direction_t;
 
+/**
+ * @brief LEDC global clock sources
+ */
 typedef enum {
-    LEDC_SLOW_CLK_RTC8M = 0,  /*!< LEDC low speed timer clock source is 8MHz RTC clock*/
-    LEDC_SLOW_CLK_APB,     /*!< LEDC low speed timer clock source is 80MHz APB clock*/
-#if SOC_LEDC_SUPPORT_XTAL_CLOCK
-    LEDC_SLOW_CLK_XTAL,    /*!< LEDC low speed timer clock source XTAL clock*/
+    LEDC_SLOW_CLK_RC_FAST = LEDC_USE_RC_FAST_CLK, /*!< LEDC low speed timer clock source is RC_FAST clock*/
+#if SOC_LEDC_SUPPORT_APB_CLOCK
+    LEDC_SLOW_CLK_APB = LEDC_USE_APB_CLK,         /*!< LEDC low speed timer clock source is 80MHz APB clock*/
 #endif
+#if SOC_LEDC_SUPPORT_PLL_DIV_CLOCK
+    LEDC_SLOW_CLK_PLL_DIV = LEDC_USE_PLL_DIV_CLK, /*!< LEDC low speed timer clock source is a PLL_DIV clock*/
+#endif
+#if SOC_LEDC_SUPPORT_XTAL_CLOCK
+    LEDC_SLOW_CLK_XTAL = LEDC_USE_XTAL_CLK,       /*!< LEDC low speed timer clock source XTAL clock*/
+#endif
+
+    LEDC_SLOW_CLK_RTC8M __attribute__((deprecated)) = LEDC_SLOW_CLK_RC_FAST,    /*!< Alias of 'LEDC_SLOW_CLK_RC_FAST'*/
 } ledc_slow_clk_sel_t;
 
 /**
+ * @brief LEDC clock source configuration struct
+ *
  * In theory, the following enumeration shall be placed in LEDC driver's header.
  * However, as the next enumeration, `ledc_clk_src_t`, makes the use of some of
  * these values and to avoid mutual inclusion of the headers, we must define it
  * here.
  */
-typedef enum {
-    LEDC_AUTO_CLK = 0,    /*!< The driver will automatically select the source clock(REF_TICK or APB) based on the giving resolution and duty parameter when init the timer*/
-    LEDC_USE_APB_CLK,     /*!< LEDC timer select APB clock as source clock*/
-    LEDC_USE_RTC8M_CLK,   /*!< LEDC timer select RTC8M_CLK as source clock. Only for low speed channels and this parameter must be the same for all low speed channels*/
-#if SOC_LEDC_SUPPORT_REF_TICK
-    LEDC_USE_REF_TICK,    /*!< LEDC timer select REF_TICK clock as source clock*/
-#endif
-#if SOC_LEDC_SUPPORT_XTAL_CLOCK
-    LEDC_USE_XTAL_CLK,    /*!< LEDC timer select XTAL clock as source clock*/
-#endif
-} ledc_clk_cfg_t;
+typedef soc_periph_ledc_clk_src_legacy_t ledc_clk_cfg_t;
 
-/* Note: Setting numeric values to match ledc_clk_cfg_t values are a hack to avoid collision with
-   LEDC_AUTO_CLK in the driver, as these enums have very similar names and user may pass
-   one of these by mistake. */
+/**
+ * @brief LEDC timer-specific clock sources
+ *
+ * Note: Setting numeric values to match ledc_clk_cfg_t values are a hack to avoid collision with
+ * LEDC_AUTO_CLK in the driver, as these enums have very similar names and user may pass
+ * one of these by mistake.
+ */
 typedef enum  {
 #if SOC_LEDC_SUPPORT_REF_TICK
     LEDC_REF_TICK = LEDC_USE_REF_TICK, /*!< LEDC timer clock divided from reference tick (1Mhz) */
 #endif
+#if SOC_LEDC_SUPPORT_APB_CLOCK
     LEDC_APB_CLK = LEDC_USE_APB_CLK,  /*!< LEDC timer clock divided from APB clock (80Mhz) */
-    LEDC_SCLK = LEDC_USE_APB_CLK      /*!< Selecting this value for LEDC_TICK_SEL_TIMER let the hardware take its source clock from LEDC_APB_CLK_SEL */
+    LEDC_SCLK = LEDC_USE_APB_CLK,     /*!< Selecting this value for LEDC_TICK_SEL_TIMER let the hardware take its source clock from LEDC_APB_CLK_SEL */
+#elif SOC_LEDC_SUPPORT_PLL_DIV_CLOCK
+    LEDC_SCLK = LEDC_USE_PLL_DIV_CLK, /*!< Selecting this value for LEDC_TICK_SEL_TIMER let the hardware take its source clock from LEDC_CLK_SEL */
+#endif
 } ledc_clk_src_t;
 
 typedef enum {
@@ -108,7 +119,7 @@ typedef enum {
     LEDC_TIMER_12_BIT,      /*!< LEDC PWM duty resolution of 12 bits */
     LEDC_TIMER_13_BIT,      /*!< LEDC PWM duty resolution of 13 bits */
     LEDC_TIMER_14_BIT,      /*!< LEDC PWM duty resolution of 14 bits */
-#if SOC_LEDC_TIMER_BIT_WIDE_NUM > 14
+#if SOC_LEDC_TIMER_BIT_WIDTH > 14
     LEDC_TIMER_15_BIT,      /*!< LEDC PWM duty resolution of 15 bits */
     LEDC_TIMER_16_BIT,      /*!< LEDC PWM duty resolution of 16 bits */
     LEDC_TIMER_17_BIT,      /*!< LEDC PWM duty resolution of 17 bits */

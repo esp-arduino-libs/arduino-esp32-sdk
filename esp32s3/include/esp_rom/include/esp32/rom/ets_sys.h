@@ -1,29 +1,15 @@
-// Copyright 2010-2016 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-#ifndef _ROM_ETS_SYS_H_
-#define _ROM_ETS_SYS_H_
+/*
+ * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
 #include "sdkconfig.h"
-
-#ifdef CONFIG_LEGACY_INCLUDE_COMMON_HEADERS
-#include "soc/soc.h"
-#endif
 
 #ifndef CONFIG_IDF_TARGET_ESP32
 #error "This header should only be included when building for ESP32"
@@ -62,7 +48,10 @@ extern "C" {
 
 typedef enum {
     ETS_OK     = 0, /**< return successful in ets*/
-    ETS_FAILED = 1  /**< return failed in ets*/
+    ETS_FAILED = 1, /**< return failed in ets*/
+    ETS_PENDING = 2,
+    ETS_BUSY = 3,
+    ETS_CANCEL = 4,
 } ETS_STATUS;
 
 typedef uint32_t ETSSignal;
@@ -635,13 +624,16 @@ void intr_matrix_set(int cpu_no, uint32_t model_num, uint32_t intr_num);
 
 #define ETS_MEM_BAR() asm volatile ( "" : : : "memory" )
 
+#ifdef ESP_PLATFORM
+// Remove in IDF v6.0 (IDF-7044)
 typedef enum {
     OK = 0,
     FAIL,
     PENDING,
     BUSY,
     CANCEL,
-} STATUS;
+} STATUS __attribute__((deprecated("Use ETS_STATUS instead")));
+#endif
 
 /**
   * @}
@@ -650,5 +642,3 @@ typedef enum {
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _ROM_ETS_SYS_H_ */

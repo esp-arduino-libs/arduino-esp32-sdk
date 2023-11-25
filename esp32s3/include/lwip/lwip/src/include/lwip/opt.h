@@ -505,11 +505,8 @@
  * The number of sys timeouts used by the core stack (not apps)
  * The default number of timeouts is calculated here for all enabled modules.
  */
-#if ESP_LWIP
-#define LWIP_NUM_SYS_TIMEOUT_INTERNAL   (LWIP_TCP + IP_REASSEMBLY + (LWIP_ARP + (ESP_GRATUITOUS_ARP ? 1 : 0)) + (ESP_LWIP_DHCP_FINE_TIMERS_ONDEMAND ? LWIP_DHCP : 2*LWIP_DHCP + (ESP_DHCPS_TIMER ? 1 : 0)) + LWIP_AUTOIP + LWIP_IGMP + (ESP_LWIP_DNS_TIMERS_ONDEMAND ? 0 : LWIP_DNS) + PPP_NUM_TIMEOUTS + (LWIP_IPV6 * (1 + LWIP_IPV6_REASS + LWIP_IPV6_MLD)))
-#else
-#define LWIP_NUM_SYS_TIMEOUT_INTERNAL   (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_NUM_TIMEOUTS + (LWIP_IPV6 * (1 + LWIP_IPV6_REASS + LWIP_IPV6_MLD)))
-#endif
+#define LWIP_NUM_SYS_TIMEOUT_INTERNAL   (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (ESP_LWIP_DHCP_FINE_TIMERS_ONDEMAND ? LWIP_DHCP : 2*LWIP_DHCP) + LWIP_AUTOIP + (ESP_LWIP_IGMP_TIMERS_ONDEMAND ? 0 : LWIP_IGMP) + (ESP_LWIP_DNS_TIMERS_ONDEMAND ? 0 : LWIP_DNS) + PPP_NUM_TIMEOUTS + (LWIP_IPV6 * (1 + LWIP_IPV6_REASS + (ESP_LWIP_MLD6_TIMERS_ONDEMAND ? 0 : LWIP_IPV6_MLD))))
+
 /**
  * MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active timeouts.
  * The default number of timeouts is calculated here for all enabled modules.
@@ -976,18 +973,6 @@
  * @}
  */
 
-#ifndef LWIP_DHCP_IP_ADDR_RESTORE
-#define LWIP_DHCP_IP_ADDR_RESTORE()       0
-#endif
-
-#ifndef LWIP_DHCP_IP_ADDR_STORE
-#define LWIP_DHCP_IP_ADDR_STORE()
-#endif
-
-#ifndef LWIP_DHCP_IP_ADDR_ERASE
-#define LWIP_DHCP_IP_ADDR_ERASE(esp_netif)
-#endif
-
 /*
    ------------------------------------
    ---------- AUTOIP options ----------
@@ -1016,13 +1001,6 @@
  */
 #if !defined LWIP_DHCP_AUTOIP_COOP || defined __DOXYGEN__
 #define LWIP_DHCP_AUTOIP_COOP           0
-#endif
-
-/**
- * ESP_IPV6_AUTOCONFIG==1: Enable stateless address autoconfiguration as per RFC 4862.
- */
-#if !defined ESP_IPV6_AUTOCONFIG
-#define ESP_IPV6_AUTOCONFIG 0
 #endif
 
 /**
@@ -1335,6 +1313,15 @@
 #define TCP_CALCULATE_EFF_SEND_MSS      1
 #endif
 
+/**
+ * LWIP_TCP_RTO_TIME: Initial TCP retransmission timeout (ms).
+ * This defaults to 3 seconds as traditionally defined in the TCP protocol.
+ * For improving timely recovery on faster networks, this value could
+ * be lowered down to 1 second (RFC 6298) 
+ */
+#if !defined LWIP_TCP_RTO_TIME || defined __DOXYGEN__
+#define LWIP_TCP_RTO_TIME               3000
+#endif
 
 /**
  * TCP_SND_BUF: TCP sender buffer space (bytes).
@@ -1534,11 +1521,6 @@
 #define LWIP_ALTCP_TLS                  0
 #endif
 
-#if ESP_LWIP
-#if !defined LWIP_TCP_RTO_TIME || defined __DOXYGEN__
-#define LWIP_TCP_RTO_TIME             3000
-#endif
-#endif
 /**
  * @}
  */
@@ -1580,7 +1562,7 @@
  * TCP_MSS, IP header, and link header.
  */
 #if !defined PBUF_POOL_BUFSIZE || defined __DOXYGEN__
-#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_ENCAPSULATION_HLEN+PBUF_LINK_HLEN)
+#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+PBUF_IP_HLEN+PBUF_TRANSPORT_HLEN+PBUF_LINK_ENCAPSULATION_HLEN+PBUF_LINK_HLEN)
 #endif
 
 /**
@@ -1955,11 +1937,8 @@
 
 /** LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread,
  * writing from a 2nd thread and closing from a 3rd thread at the same time.
- * ATTENTION: This is currently really alpha! Some requirements:
- * - LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from
- *   multiple threads at once
- * - sys_mbox_free() has to unblock receive tasks waiting on recvmbox/acceptmbox
- *   and prevent a task pending on this during/after deletion
+ * LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from
+ * multiple threads at once!
  */
 #if !defined LWIP_NETCONN_FULLDUPLEX || defined __DOXYGEN__
 #define LWIP_NETCONN_FULLDUPLEX         0
@@ -2273,14 +2252,6 @@
 #define MIB2_STATS                      0
 #endif
 
-/**
- * IP_NAPT_STATS==1: Stats for IP NAPT.
- */
-#if !defined IP_NAPT_STATS || defined __DOXYGEN__
-#define IP_NAPT_STATS                   (IP_NAPT)
-#endif
-
-
 #else
 
 #define LINK_STATS                      0
@@ -2301,7 +2272,6 @@
 #define MLD6_STATS                      0
 #define ND6_STATS                       0
 #define MIB2_STATS                      0
-#define IP_NAPT_STATS                   0
 
 #endif /* LWIP_STATS */
 /**
@@ -2426,6 +2396,18 @@
 #endif
 
 /**
+ * LWIP_ND6==1: Enable NDP
+ * when LWIP_IPV6 is enabled in lwIP, NDP timer is enabled by default with a timeout of 1 second.
+ * However, in the case of sleepy end-device, NDP is not required.
+ * This leads to CPU waking up every 1 second, resulting in increased power consumption.
+ * Therefore, add a option to control nd6, using LWIP_ND6 enable/disable ND6 protocol.
+ * Unless you are very clear that you do not need to use ND6, please do not disable it!
+ */
+#if !defined LWIP_ND6 || defined __DOXYGEN__
+#define LWIP_ND6                       1
+#endif
+
+/**
  * IPV6_REASS_MAXAGE: Maximum time (in multiples of IP6_REASS_TMR_INTERVAL - so seconds, normally)
  * a fragmented IP packet waits for all fragments to arrive. If not all fragments arrived
  * in this time, the whole packet is discarded.
@@ -2498,7 +2480,7 @@
  * network startup.
  */
 #if !defined LWIP_IPV6_SEND_ROUTER_SOLICIT || defined __DOXYGEN__
-#define LWIP_IPV6_SEND_ROUTER_SOLICIT   1
+#define LWIP_IPV6_SEND_ROUTER_SOLICIT   LWIP_IPV6
 #endif
 
 /**
@@ -3055,6 +3037,28 @@
 */
 #ifdef __DOXYGEN__
 #define LWIP_HOOK_ND6_GET_GW(netif, dest)
+#endif
+
+/**
+ * LWIP_HOOK_IP6_SELECT_SRC_ADDR(netif, dest):
+ * Called from ip6_select_source_address() (IPv6)
+ * Signature:\code{.c}
+ *   const ip6_addr_t *my_hook(struct netif *netif, const ip6_addr_t *dest);
+ * \endcode
+ * Arguments:
+ * - netif: the netif used for selecting
+ * - dest: the destination IPv6 address
+ * Return values:
+ * - the preferred source IPv6 address of the specified destination IPv6 address
+ * - NULL, in which case none source address is preferred by the hook, lwip
+ *         will determine a source address based RFC 6724.
+ *
+ * The returned address MUST be on the specified netif!
+ * This function is meant to implement advanced IPv6 source address selection with
+ * LWIP_HOOK_IP6_SELECT_SRC_ADDR().
+*/
+#ifdef __DOXYGEN__
+#define LWIP_HOOK_IP6_SELECT_SRC_ADDR(netif, dest)
 #endif
 
 /**

@@ -6,33 +6,40 @@
 
 #pragma once
 
+#include "soc/soc_caps.h"
+#include "soc/clk_tree_defs.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#if SOC_LCD_I80_SUPPORTED || SOC_LCD_RGB_SUPPORTED
 /**
  * @brief LCD clock source
- * @note User should select the clock source based on the real requirement:
- * @verbatim embed:rst:leading-asterisk
- * +---------------------+-------------------------+----------------------------+
- * | LCD clock source    | Features                | Power Management           |
- * +=====================+=========================+============================+
- * | LCD_CLK_SRC_PLL160M | High resolution         | ESP_PM_APB_FREQ_MAX lock   |
- * +---------------------+-------------------------+----------------------------+
- * | LCD_CLK_SRC_PLL240M | High resolution         | ESP_PM_APB_FREQ_MAX lock   |
- * +---------------------+-------------------------+----------------------------+
- * | LCD_CLK_SRC_APLL    | Configurable resolution | ESP_PM_NO_LIGHT_SLEEP lock |
- * +---------------------+-------------------------+----------------------------+
- * | LCD_CLK_SRC_XTAL    | Medium resolution       | No PM lock                 |
- * +---------------------+-------------------------+----------------------------+
- * @endverbatim
+ */
+typedef soc_periph_lcd_clk_src_t lcd_clock_source_t;
+#endif
+
+/**
+ * @brief RGB color endian
  */
 typedef enum {
-    LCD_CLK_SRC_PLL160M, /*!< Select PLL160M as the source clock */
-    LCD_CLK_SRC_PLL240M, /*!< Select PLL240M as the source clock */
-    LCD_CLK_SRC_APLL,    /*!< Select APLL as the source clock */
-    LCD_CLK_SRC_XTAL,    /*!< Select XTAL as the source clock */
-} lcd_clock_source_t;
+    LCD_RGB_ELEMENT_ORDER_RGB, /*!< RGB element order: RGB */
+    LCD_RGB_ELEMENT_ORDER_BGR, /*!< RGB element order: BGR */
+} lcd_rgb_element_order_t;
+
+/// for backward compatible
+typedef lcd_rgb_element_order_t lcd_color_rgb_endian_t;
+#define LCD_RGB_ENDIAN_RGB LCD_RGB_ELEMENT_ORDER_RGB
+#define LCD_RGB_ENDIAN_BGR LCD_RGB_ELEMENT_ORDER_BGR
+
+/**
+ * @brief RGB data endian
+ */
+typedef enum {
+    LCD_RGB_DATA_ENDIAN_BIG = 0, /*!< RGB data endian: MSB first */
+    LCD_RGB_DATA_ENDIAN_LITTLE,  /*!< RGB data endian: LSB first */
+} lcd_rgb_data_endian_t;
 
 /**
  * @brief LCD color space

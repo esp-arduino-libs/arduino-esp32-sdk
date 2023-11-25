@@ -1,16 +1,8 @@
-// Copyright 2015-2019 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 /*******************************************************************************
  * NOTICE
@@ -23,16 +15,21 @@
 #pragma once
 
 #include <esp_err.h>
-#if !CONFIG_IDF_TARGET_ESP32C3 && !CONFIG_IDF_TARGET_ESP32H2
+#include "sdkconfig.h"
+
 #include "soc/soc_caps.h"
+#if SOC_RTCIO_PIN_COUNT > 0
 #include "hal/rtc_io_ll.h"
+#if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
+#include "hal/rtc_io_types.h"
 #endif
+#endif //SOC_RTCIO_PIN_COUNT > 0
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
+#if SOC_RTCIO_PIN_COUNT > 0
 /**
  * Select the rtcio function.
  *
@@ -42,6 +39,7 @@ extern "C" {
  */
 #define rtcio_hal_function_select(rtcio_num, func) rtcio_ll_function_select(rtcio_num, func)
 
+#if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
 /**
  * Enable rtcio output.
  *
@@ -240,7 +238,7 @@ void rtcio_hal_set_direction_in_sleep(int rtcio_num, rtc_gpio_mode_t mode);
 
 #endif
 
-#if SOC_RTCIO_HOLD_SUPPORTED || SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
+#if SOC_RTCIO_HOLD_SUPPORTED && SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
 
 /**
  * Helper function to disconnect internal circuits from an RTC IO
@@ -258,6 +256,39 @@ void rtcio_hal_set_direction_in_sleep(int rtcio_num, rtc_gpio_mode_t mode);
 void rtcio_hal_isolate(int rtc_num);
 
 #endif
+
+#endif //SOC_RTCIO_PIN_COUNT > 0
+
+#if SOC_GPIO_SUPPORT_DEEPSLEEP_WAKEUP && (SOC_RTCIO_PIN_COUNT > 0)
+
+#define gpio_hal_deepsleep_wakeup_enable(hal, gpio_num, intr_type)  rtcio_hal_wakeup_enable(gpio_num, intr_type)
+#define gpio_hal_deepsleep_wakeup_disable(hal, gpio_num)            rtcio_hal_wakeup_disable(gpio_num)
+#define gpio_hal_deepsleep_wakeup_is_enabled(hal, gpio_num)         rtcio_hal_wakeup_is_enabled(gpio_num)
+#define rtc_hal_gpio_get_wakeup_status()                            rtcio_hal_get_interrupt_status()
+#define rtc_hal_gpio_clear_wakeup_status()                          rtcio_hal_clear_interrupt_status()
+
+/**
+ * @brief Get the status of whether an IO is used for sleep wake-up.
+ *
+ * @param hw Peripheral GPIO hardware instance address.
+ * @param rtcio_num GPIO number
+ * @return True if the pin is enabled to wake up from deep-sleep
+ */
+#define rtcio_hal_wakeup_is_enabled(rtcio_num) rtcio_ll_wakeup_is_enabled(rtcio_num)
+
+/**
+ * @brief Get the rtc io interrupt status
+ *
+ * @return  bit 0~7 corresponding to 0 ~ SOC_RTCIO_PIN_COUNT.
+ */
+#define rtcio_hal_get_interrupt_status()        rtcio_ll_get_interrupt_status()
+
+/**
+ * @brief Clear all LP IO pads status
+ */
+#define rtcio_hal_clear_interrupt_status()      rtcio_ll_clear_interrupt_status()
+
+#endif //SOC_GPIO_SUPPORT_DEEPSLEEP_WAKEUP && (SOC_RTCIO_PIN_COUNT > 0)
 
 #ifdef __cplusplus
 }

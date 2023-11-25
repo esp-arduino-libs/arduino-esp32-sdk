@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2020-2021 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2020-2022 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -12,7 +12,9 @@ extern "C" {
 #endif
 
 //This is the ADC calibration value version burnt in efuse
-#define ESP_EFUSE_ADC_CALIB_VER     1
+#define ESP_EFUSE_ADC_CALIB_VER      1
+#define ESP_EFUSE_ADC_CALIB_VER_MIN  ESP_EFUSE_ADC_CALIB_VER
+#define ESP_EFUSE_ADC_CALIB_VER_MAX  ESP_EFUSE_ADC_CALIB_VER
 
 /**
  * @brief Get the RTC calibration efuse version
@@ -48,11 +50,12 @@ esp_err_t esp_efuse_rtc_calib_get_cal_voltage(int version, uint32_t adc_unit, in
 /**
  * @brief Get the temperature sensor calibration number delta_T stored in the efuse.
  *
- * @param version Version of the stored efuse
+ * @param tsens_cal Pointer of the specification of temperature sensor calibration number in efuse.
  *
- * @return The specification of temperature sensor calibration number in efuse.
+ * @return ESP_OK if get the calibration value successfully.
+ *         ESP_ERR_INVALID_ARG if can't get the calibration value.
  */
-float esp_efuse_rtc_calib_get_cal_temp(int version);
+esp_err_t esp_efuse_rtc_calib_get_tsens_val(float* tsens_cal);
 
 #ifdef __cplusplus
 }

@@ -1,16 +1,8 @@
-// Copyright 2015-2019 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 /*******************************************************************************
  * NOTICE
@@ -44,10 +36,11 @@
  * Input parameters to the ``spi_hal_cal_clock_conf`` to calculate the timing configuration
  */
 typedef struct {
+    uint32_t clk_src_hz;                ///< Selected SPI clock source speed in Hz
     uint32_t half_duplex;               ///< Whether half duplex mode is used, device specific
     uint32_t no_compensate;             ///< No need to add dummy to compensate the timing, device specific
-    uint32_t clock_speed_hz;            ///< Desired frequency.
-    uint32_t duty_cycle;                ///< Desired duty cycle of SPI clock
+    uint32_t expected_freq;             ///< Expected frequency in Hz.
+    uint32_t duty_cycle;                ///< Expected duty cycle of SPI clock
     uint32_t input_delay_ns;            /**< Maximum delay between SPI launch clock and the data to be valid.
                                          *   This is used to compensate/calculate the maximum frequency allowed.
                                          *   Left 0 if not known.
@@ -62,6 +55,7 @@ typedef struct {
  */
 typedef struct {
     spi_ll_clock_val_t clock_reg;       ///< Register value used by the LL layer
+    spi_clock_source_t clock_source;    ///< Clock source of each device used by LL layer
     int timing_dummy;                   ///< Extra dummy needed to compensate the timing
     int timing_miso_delay;              ///< Extra miso delay clocks to compensate the timing
 } spi_hal_timing_conf_t;
@@ -151,7 +145,7 @@ typedef struct {
         uint32_t tx_lsbfirst : 1;       ///< Whether LSB is sent first for TX data, device specific
         uint32_t rx_lsbfirst : 1;       ///< Whether LSB is received first for RX data, device specific
         uint32_t no_compensate : 1;     ///< No need to add dummy to compensate the timing, device specific
-#if SOC_SPI_SUPPORT_AS_CS
+#if SOC_SPI_AS_CS_SUPPORTED
         uint32_t as_cs  : 1;            ///< Whether to toggle the CS while the clock toggles, device specific
 #endif
         uint32_t positive_cs : 1;       ///< Whether the postive CS feature is abled, device specific
@@ -250,6 +244,7 @@ int spi_hal_master_cal_clock(int fapb, int hz, int duty_cycle);
 /**
  * Get the timing configuration for given parameters.
  *
+ * @param source_freq_hz Clock freq of selected clock source for SPI in Hz.
  * @param eff_clk        Actual SPI clock frequency
  * @param gpio_is_used   true if the GPIO matrix is used, otherwise false.
  * @param input_delay_ns Maximum delay between SPI launch clock and the data to
@@ -258,7 +253,7 @@ int spi_hal_master_cal_clock(int fapb, int hz, int duty_cycle);
  * @param dummy_n        Dummy cycles required to correctly read the data.
  * @param miso_delay_n   suggested delay on the MISO line, in APB clocks.
  */
-void spi_hal_cal_timing(int eff_clk, bool gpio_is_used, int input_delay_ns, int *dummy_n, int *miso_delay_n);
+void spi_hal_cal_timing(int source_freq_hz, int eff_clk, bool gpio_is_used, int input_delay_ns, int *dummy_n, int *miso_delay_n);
 
 /**
  * Get the maximum frequency allowed to read if no compensation is used.

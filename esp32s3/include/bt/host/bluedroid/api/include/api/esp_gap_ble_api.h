@@ -1,16 +1,8 @@
-// Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef __ESP_GAP_BLE_API_H__
 #define __ESP_GAP_BLE_API_H__
@@ -141,7 +133,7 @@ typedef enum {
     ESP_GAP_BLE_SCAN_PARAM_SET_COMPLETE_EVT,                /*!< When scan parameters set complete, the event comes */
     ESP_GAP_BLE_SCAN_RESULT_EVT,                            /*!< When one scan result ready, the event comes each time */
     ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT,              /*!< When raw advertising data set complete, the event comes */
-    ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT,         /*!< When raw advertising data set complete, the event comes */
+    ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT,         /*!< When raw scan response data set complete, the event comes */
     ESP_GAP_BLE_ADV_START_COMPLETE_EVT,                     /*!< When start advertising complete, the event comes */
     ESP_GAP_BLE_SCAN_START_COMPLETE_EVT,                    /*!< When start scan complete, the event comes */
     //BLE_INCLUDED
@@ -173,8 +165,8 @@ typedef enum {
     ESP_GAP_BLE_SET_CHANNELS_EVT = 29,                           /*!< When setting BLE channels complete, the event comes */
     //BLE_50_FEATURE_SUPPORT
     ESP_GAP_BLE_READ_PHY_COMPLETE_EVT,                           /*!< when reading phy complete, this event comes */
-    ESP_GAP_BLE_SET_PREFERED_DEFAULT_PHY_COMPLETE_EVT,          /*!< when preferred default phy complete, this event comes */
-    ESP_GAP_BLE_SET_PREFERED_PHY_COMPLETE_EVT,                  /*!< when preferred phy complete , this event comes */
+    ESP_GAP_BLE_SET_PREFERRED_DEFAULT_PHY_COMPLETE_EVT,          /*!< when preferred default phy complete, this event comes */
+    ESP_GAP_BLE_SET_PREFERRED_PHY_COMPLETE_EVT,                  /*!< when preferred phy complete , this event comes */
     ESP_GAP_BLE_EXT_ADV_SET_RAND_ADDR_COMPLETE_EVT,              /*!< when extended set random address complete, the event comes */
     ESP_GAP_BLE_EXT_ADV_SET_PARAMS_COMPLETE_EVT,                 /*!< when extended advertising parameter complete, the event comes */
     ESP_GAP_BLE_EXT_ADV_DATA_SET_COMPLETE_EVT,                   /*!< when extended advertising data complete, the event comes */
@@ -202,7 +194,7 @@ typedef enum {
     ESP_GAP_BLE_SCAN_TIMEOUT_EVT,                                /*!< when scan timeout complete, the event comes */
     ESP_GAP_BLE_ADV_TERMINATED_EVT,                              /*!< when advertising terminate data complete, the event comes */
     ESP_GAP_BLE_SCAN_REQ_RECEIVED_EVT,                           /*!< when scan req received complete, the event comes */
-    ESP_GAP_BLE_CHANNEL_SELETE_ALGORITHM_EVT,                    /*!< when channel select algorithm complete, the event comes */
+    ESP_GAP_BLE_CHANNEL_SELECT_ALGORITHM_EVT,                    /*!< when channel select algorithm complete, the event comes */
     ESP_GAP_BLE_PERIODIC_ADV_REPORT_EVT,                         /*!< when periodic report advertising complete, the event comes */
     ESP_GAP_BLE_PERIODIC_ADV_SYNC_LOST_EVT,                      /*!< when periodic advertising sync lost complete, the event comes */
     ESP_GAP_BLE_PERIODIC_ADV_SYNC_ESTAB_EVT,                     /*!< when periodic advertising sync establish complete, the event comes */
@@ -210,6 +202,12 @@ typedef enum {
     ESP_GAP_BLE_SC_OOB_REQ_EVT,                                  /*!< Secure Connection OOB request event */
     ESP_GAP_BLE_SC_CR_LOC_OOB_EVT,                               /*!< Secure Connection create OOB data complete event */
     ESP_GAP_BLE_GET_DEV_NAME_COMPLETE_EVT,                       /*!< When getting BT device name complete, the event comes */
+    //BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER
+    ESP_GAP_BLE_PERIODIC_ADV_RECV_ENABLE_COMPLETE_EVT,           /*!< when set periodic advertising receive enable complete, the event comes */
+    ESP_GAP_BLE_PERIODIC_ADV_SYNC_TRANS_COMPLETE_EVT,            /*!< when periodic advertising sync transfer complete, the event comes */
+    ESP_GAP_BLE_PERIODIC_ADV_SET_INFO_TRANS_COMPLETE_EVT,        /*!< when periodic advertising set info transfer complete, the event comes */
+    ESP_GAP_BLE_SET_PAST_PARAMS_COMPLETE_EVT,                    /*!< when set periodic advertising sync transfer params complete, the event comes */
+    ESP_GAP_BLE_PERIODIC_ADV_SYNC_TRANS_RECV_EVT,                /*!< when periodic advertising sync transfer received, the event comes */
     ESP_GAP_BLE_EVT_MAX,                                         /*!< when maximum advertising event complete, the event comes */
 } esp_gap_ble_cb_event_t;
 
@@ -594,6 +592,13 @@ typedef struct {
     esp_bt_octet16_t       dhk;                 /*!< the 16 bits of the dh key value */
 } esp_ble_local_id_keys_t;                      /*!< the structure of the ble local id keys value type*/
 
+/**
+* @brief  structure type of the ble local oob data value
+*/
+typedef struct {
+    esp_bt_octet16_t        oob_c;              /*!< the 128 bits of confirmation value */
+    esp_bt_octet16_t        oob_r;              /*!< the 128 bits of randomizer value */
+} esp_ble_local_oob_data_t;
 
 /**
   * @brief Structure associated with ESP_AUTH_CMPL_EVT
@@ -620,6 +625,7 @@ typedef union
     esp_ble_sec_req_t          ble_req;        /*!< BLE SMP related request */
     esp_ble_key_t              ble_key;        /*!< BLE SMP keys used when pairing */
     esp_ble_local_id_keys_t    ble_id_keys;    /*!< BLE IR event */
+    esp_ble_local_oob_data_t   oob_data;       /*!< BLE SMP secure connection OOB data */
     esp_ble_auth_cmpl_t        auth_cmpl;      /*!< Authentication complete indication. */
 } esp_ble_sec_t;                               /*!< BLE security type */
 #if (BLE_42_FEATURE_SUPPORT == TRUE)
@@ -652,7 +658,6 @@ typedef enum{
     ESP_BLE_WHITELIST_ADD        = 0X01,    /*!< add address to whitelist */
     ESP_BLE_WHITELIST_CLEAR      = 0x02,    /*!< clear all device in whitelist */
 } esp_ble_wl_operation_t;
-
 #if (BLE_42_FEATURE_SUPPORT == TRUE)
 typedef enum {
     ESP_BLE_DUPLICATE_EXCEPTIONAL_LIST_ADD      = 0,  /*!< Add device info into duplicate scan exceptional list */
@@ -784,7 +789,7 @@ typedef struct {
     uint32_t interval_min;              /*!< ext adv minimum interval */
     uint32_t interval_max;              /*!< ext adv maximum interval */
     esp_ble_adv_channel_t channel_map;  /*!< ext adv channel map */
-    esp_ble_addr_type_t own_addr_type;  /*!< ext adv own addresss type */
+    esp_ble_addr_type_t own_addr_type;  /*!< ext adv own address type */
     esp_ble_addr_type_t peer_addr_type; /*!< ext adv peer address type */
     esp_bd_addr_t peer_addr;            /*!< ext adv peer address */
     esp_ble_adv_filter_t filter_policy; /*!< ext adv filter policy */
@@ -793,7 +798,7 @@ typedef struct {
     uint8_t max_skip;                   /*!< ext adv maximum skip */
     esp_ble_gap_phy_t secondary_phy;    /*!< ext adv secondary phy */
     uint8_t sid;                        /*!< ext adv sid */
-    bool scan_req_notif;                /*!< ext adv sacn request event notify */
+    bool scan_req_notif;                /*!< ext adv scan request event notify */
 } esp_ble_gap_ext_adv_params_t;
 
 /**
@@ -809,7 +814,7 @@ typedef struct {
 * @brief ext scan parameters
 */
 typedef struct {
-    esp_ble_addr_type_t own_addr_type;        /*!< ext scan own addresss type */
+    esp_ble_addr_type_t own_addr_type;        /*!< ext scan own address type */
     esp_ble_scan_filter_t filter_policy;      /*!< ext scan filter policy */
     esp_ble_scan_duplicate_t  scan_duplicate; /*!< ext scan duplicate scan */
     esp_ble_ext_scan_cfg_mask_t cfg_mask;     /*!< ext scan config mask */
@@ -910,6 +915,25 @@ typedef struct {
 } esp_ble_gap_periodic_adv_sync_estab_t;
 
 #endif //#if (BLE_50_FEATURE_SUPPORT == TRUE)
+
+#if (BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER == TRUE)
+/// Periodic advertising sync trans mode
+#define ESP_BLE_GAP_PAST_MODE_NO_SYNC_EVT                 (0x00) /*!< No attempt is made to sync and no periodic adv sync transfer received event */
+#define ESP_BLE_GAP_PAST_MODE_NO_REPORT_EVT               (0x01) /*!< An periodic adv sync transfer received event and no periodic adv report events */
+#define ESP_BLE_GAP_PAST_MODE_DUP_FILTER_DISABLED         (0x02) /*!< Periodic adv report events will be enabled with duplicate filtering disabled */
+#define ESP_BLE_GAP_PAST_MODE_DUP_FILTER_ENABLED          (0x03) /*!< Periodic adv report events will be enabled with duplicate filtering enabled */
+typedef uint8_t esp_ble_gap_past_mode_t;
+
+/**
+* @brief periodic adv sync transfer parameters
+*/
+typedef struct {
+    esp_ble_gap_past_mode_t mode;       /*!< periodic advertising sync transfer mode */
+    uint16_t skip;                      /*!< the number of periodic advertising packets that can be skipped */
+    uint16_t sync_timeout;              /*!< synchronization timeout for the periodic advertising train */
+    uint8_t cte_type;                   /*!< periodic advertising sync transfer CET type */
+} esp_ble_gap_past_params_t;
+#endif // #if (BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER == TRUE)
 
 /**
  * @brief Gap callback parameters union
@@ -1023,7 +1047,7 @@ typedef union {
     struct ble_pkt_data_length_cmpl_evt_param {
         esp_bt_status_t status;                     /*!< Indicate the set pkt data length operation success status */
         esp_ble_pkt_data_length_params_t params;    /*!<  pkt data length value */
-    } pkt_data_lenth_cmpl;                          /*!< Event parameter of ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT */
+    } pkt_data_length_cmpl;                          /*!< Event parameter of ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT */
     /**
      * @brief ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT
      */
@@ -1065,7 +1089,7 @@ typedef union {
      */
     struct ble_update_whitelist_cmpl_evt_param {
         esp_bt_status_t status;                     /*!< Indicate the add or remove whitelist operation success status */
-        esp_ble_wl_operation_t wl_opration;          /*!< The value is ESP_BLE_WHITELIST_ADD if add address to whitelist operation success, ESP_BLE_WHITELIST_REMOVE if remove address from the whitelist operation success */
+        esp_ble_wl_operation_t wl_operation;        /*!< The value is ESP_BLE_WHITELIST_ADD if add address to whitelist operation success, ESP_BLE_WHITELIST_REMOVE if remove address from the whitelist operation success */
     } update_whitelist_cmpl;                        /*!< Event parameter of ESP_GAP_BLE_UPDATE_WHITELIST_COMPLETE_EVT */
 #if (BLE_42_FEATURE_SUPPORT == TRUE)
     /**
@@ -1096,17 +1120,17 @@ typedef union {
         esp_ble_gap_phy_t rx_phy;                 /*!< rx phy type */
     } read_phy;                                   /*!< Event parameter of ESP_GAP_BLE_READ_PHY_COMPLETE_EVT */
     /**
-     * @brief ESP_GAP_BLE_SET_PREFERED_DEFAULT_PHY_COMPLETE_EVT
+     * @brief ESP_GAP_BLE_SET_PREFERRED_DEFAULT_PHY_COMPLETE_EVT
      */
     struct ble_set_perf_def_phy_cmpl_evt_param {
         esp_bt_status_t status;                     /*!< Indicate perf default phy set status */
-    } set_perf_def_phy;                             /*!< Event parameter of ESP_GAP_BLE_SET_PREFERED_DEFAULT_PHY_COMPLETE_EVT */
+    } set_perf_def_phy;                             /*!< Event parameter of ESP_GAP_BLE_SET_PREFERRED_DEFAULT_PHY_COMPLETE_EVT */
     /**
-     * @brief ESP_GAP_BLE_SET_PREFERED_PHY_COMPLETE_EVT
+     * @brief ESP_GAP_BLE_SET_PREFERRED_PHY_COMPLETE_EVT
      */
     struct ble_set_perf_phy_cmpl_evt_param {
         esp_bt_status_t status;                     /*!< Indicate perf phy set status */
-    } set_perf_phy;                                  /*!< Event parameter of ESP_GAP_BLE_SET_PREFERED_PHY_COMPLETE_EVT */
+    } set_perf_phy;                                 /*!< Event parameter of ESP_GAP_BLE_SET_PREFERRED_PHY_COMPLETE_EVT */
     /**
      * @brief ESP_GAP_BLE_EXT_ADV_SET_RAND_ADDR_COMPLETE_EVT
      */
@@ -1129,7 +1153,7 @@ typedef union {
      * @brief ESP_GAP_BLE_EXT_SCAN_RSP_DATA_SET_COMPLETE_EVT
      */
     struct ble_ext_adv_scan_rsp_set_cmpl_evt_param {
-        esp_bt_status_t status;                      /*!< Indicate extend advertising sacn response data set status */
+        esp_bt_status_t status;                      /*!< Indicate extend advertising scan response data set status */
     } scan_rsp_set;                                  /*!< Event parameter of ESP_GAP_BLE_EXT_SCAN_RSP_DATA_SET_COMPLETE_EVT */
     /**
      * @brief ESP_GAP_BLE_EXT_ADV_START_COMPLETE_EVT
@@ -1189,7 +1213,7 @@ typedef union {
      * @brief ESP_GAP_BLE_PERIODIC_ADV_SYNC_CANCEL_COMPLETE_EVT
      */
     struct ble_period_adv_sync_cancel_cmpl_param {
-        esp_bt_status_t status;                  /*!< Indicate periodic advertising sync cancle status */
+        esp_bt_status_t status;                  /*!< Indicate periodic advertising sync cancel status */
     } period_adv_sync_cancel;                    /*!< Event parameter of ESP_GAP_BLE_PERIODIC_ADV_SYNC_CANCEL_COMPLETE_EVT */
      /**
      * @brief ESP_GAP_BLE_PERIODIC_ADV_SYNC_TERMINATE_COMPLETE_EVT
@@ -1262,12 +1286,12 @@ typedef union {
         esp_bd_addr_t scan_addr;             /*!< scanner address */
     } scan_req_received;                     /*!< Event parameter of ESP_GAP_BLE_SCAN_REQ_RECEIVED_EVT */
     /**
-     * @brief ESP_GAP_BLE_CHANNEL_SELETE_ALGORITHM_EVT
+     * @brief ESP_GAP_BLE_CHANNEL_SELECT_ALGORITHM_EVT
      */
     struct ble_channel_sel_alg_param {
         uint16_t conn_handle;              /*!< connection handle */
         uint8_t channel_sel_alg;           /*!< channel selection algorithm */
-    } channel_sel_alg;                     /*!< Event parameter of ESP_GAP_BLE_CHANNEL_SELETE_ALGORITHM_EVT */
+    } channel_sel_alg;                     /*!< Event parameter of ESP_GAP_BLE_CHANNEL_SELECT_ALGORITHM_EVT */
     /**
      * @brief ESP_GAP_BLE_PERIODIC_ADV_SYNC_LOST_EVT
      */
@@ -1309,6 +1333,50 @@ typedef union {
         esp_ble_gap_periodic_adv_report_t params; /*!< periodic advertising report parameters */
     } period_adv_report;                          /*!< Event parameter of ESP_GAP_BLE_PERIODIC_ADV_REPORT_EVT */
 #endif // #if (BLE_50_FEATURE_SUPPORT == TRUE)
+#if (BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER == TRUE)
+    /**
+     * @brief ESP_GAP_BLE_PERIODIC_ADV_RECV_ENABLE_COMPLETE_EVT
+     */
+    struct ble_periodic_adv_recv_enable_cmpl_param {
+        esp_bt_status_t status;             /*!< Set periodic advertising receive enable status */
+    } period_adv_recv_enable;               /*!< Event parameter of ESP_GAP_BLE_PERIODIC_ADV_RECV_ENABLE_COMPLETE_EVT */
+    /**
+     * @brief ESP_GAP_BLE_PERIODIC_ADV_SYNC_TRANS_COMPLETE_EVT
+     */
+    struct ble_periodic_adv_sync_trans_cmpl_param {
+        esp_bt_status_t status;             /*!< Periodic advertising sync transfer status */
+        esp_bd_addr_t bda;                  /*!< The remote device address */
+    } period_adv_sync_trans;                /*!< Event parameter of ESP_GAP_BLE_PERIODIC_ADV_SYNC_TRANS_COMPLETE_EVT */
+    /**
+     * @brief ESP_GAP_BLE_PERIODIC_ADV_SET_INFO_TRANS_COMPLETE_EVT
+     */
+    struct ble_periodic_adv_set_info_trans_cmpl_param {
+        esp_bt_status_t status;             /*!< Periodic advertising set info transfer status */
+        esp_bd_addr_t bda;                  /*!< The remote device address */
+    } period_adv_set_info_trans;            /*!< Event parameter of ESP_GAP_BLE_PERIODIC_ADV_SET_INFO_TRANS_COMPLETE_EVT */
+    /**
+     * @brief ESP_GAP_BLE_SET_PAST_PARAMS_COMPLETE_EVT
+     */
+    struct ble_set_past_params_cmpl_param {
+        esp_bt_status_t status;             /*!< Set periodic advertising sync transfer params status */
+        esp_bd_addr_t bda;                  /*!< The remote device address */
+    } set_past_params;                      /*!< Event parameter of ESP_GAP_BLE_SET_PAST_PARAMS_COMPLETE_EVT */
+    /**
+     * @brief ESP_GAP_BLE_PERIODIC_ADV_SYNC_TRANS_RECV_EVT
+     */
+    struct ble_periodic_adv_sync_trans_recv_param {
+        esp_bt_status_t status;             /*!< Periodic advertising sync transfer received status */
+        esp_bd_addr_t bda;                  /*!< The remote device address */
+        uint16_t service_data;              /*!< The value provided by the peer device */
+        uint16_t sync_handle;               /*!< Periodic advertising sync handle */
+        uint8_t adv_sid;                    /*!< Periodic advertising set id */
+        uint8_t adv_addr_type;              /*!< Periodic advertiser address type */
+        esp_bd_addr_t adv_addr;             /*!< Periodic advertiser address */
+        esp_ble_gap_phy_t adv_phy;          /*!< Periodic advertising PHY */
+        uint16_t adv_interval;              /*!< Periodic advertising interval */
+        uint8_t adv_clk_accuracy;           /*!< Periodic advertising clock accuracy */
+    } past_received;                        /*!< Event parameter of ESP_GAP_BLE_PERIODIC_ADV_SYNC_TRANS_RECV_EVT */
+#endif // #if (BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER == TRUE)
 } esp_ble_gap_cb_param_t;
 
 /**
@@ -1433,9 +1501,17 @@ esp_err_t esp_ble_gap_update_conn_params(esp_ble_conn_update_params_t *params);
 esp_err_t esp_ble_gap_set_pkt_data_len(esp_bd_addr_t remote_device, uint16_t tx_data_length);
 
 /**
- * @brief           This function sets the static Random Address and Non-Resolvable Private Address for the application
+ * @brief           This function allows configuring either a Non-Resolvable Private Address or a Static Random Address
  *
- * @param[in]       rand_addr: the random address which should be setting
+ * @param[in]       rand_addr: The address to be configured. Refer to the table below for possible address subtypes:
+ *
+ *               | address [47:46] | Address Type             |
+ *               |-----------------|--------------------------|
+ *               |      0b00       | Non-Resolvable Private   |
+ *               |                 | Address                  |
+ *               |-----------------|--------------------------|
+ *               |      0b11       | Static Random Address    |
+ *               |-----------------|--------------------------|
  *
  * @return
  *                  - ESP_OK : success
@@ -1457,7 +1533,7 @@ esp_err_t esp_ble_gap_clear_rand_addr(void);
 
 
 /**
- * @brief           Enable/disable privacy on the local device
+ * @brief           Enable/disable privacy (including address resolution) on the local device
  *
  * @param[in]       privacy_enable   - enable/disable privacy on remote device.
  *
@@ -1538,6 +1614,7 @@ esp_err_t esp_ble_gap_set_prefer_conn_params(esp_bd_addr_t bd_addr,
 #endif // #if (BLE_42_FEATURE_SUPPORT == TRUE)
 /**
  * @brief           Set device name to the local device
+ *                  Note: This API don't affect the advertising data
  *
  * @param[in]       name   -  device name.
  *
@@ -1586,7 +1663,7 @@ uint8_t *esp_ble_resolve_adv_data(uint8_t *adv_data, uint8_t type, uint8_t *leng
  * @brief           This function is called to set raw advertising data. User need to fill
  *                  ADV data by self.
  *
- * @param[in]       raw_data : raw advertising data
+ * @param[in]       raw_data : raw advertising data with the format: [Length 1][Data Type 1][Data 1][Length 2][Data Type 2][Data 2] ...
  * @param[in]       raw_data_len : raw advertising data length , less than 31 bytes
  *
  * @return
@@ -1799,6 +1876,29 @@ esp_err_t esp_ble_get_bond_device_list(int *dev_num, esp_ble_bond_dev_t *dev_lis
 */
 esp_err_t esp_ble_oob_req_reply(esp_bd_addr_t bd_addr, uint8_t *TK, uint8_t len);
 
+/**
+* @brief           This function is called to provide the OOB data for
+*                  SMP in response to ESP_GAP_BLE_SC_OOB_REQ_EVT
+*
+* @param[in]       bd_addr: BD address of the peer device.
+* @param[in]       p_c: Confirmation value, it shall be a 128-bit random number
+* @param[in]       p_r: Randomizer value, it should be a 128-bit random number
+*
+* @return          - ESP_OK : success
+*                  - other  : failed
+*
+*/
+esp_err_t esp_ble_sc_oob_req_reply(esp_bd_addr_t bd_addr, uint8_t p_c[16], uint8_t p_r[16]);
+
+/**
+* @brief           This function is called to create the OOB data for
+*                  SMP when secure connection
+*
+* @return          - ESP_OK : success
+*                  - other  : failed
+*
+*/
+esp_err_t esp_ble_create_sc_oob_data(void);
 #endif /* #if (SMP_INCLUDED == TRUE) */
 
 /**
@@ -1885,7 +1985,7 @@ esp_err_t esp_ble_gap_read_phy(esp_bd_addr_t bd_addr);
 *                    - other  : failed
 *
 */
-esp_err_t esp_ble_gap_set_prefered_default_phy(esp_ble_gap_phy_mask_t tx_phy_mask, esp_ble_gap_phy_mask_t rx_phy_mask);
+esp_err_t esp_ble_gap_set_preferred_default_phy(esp_ble_gap_phy_mask_t tx_phy_mask, esp_ble_gap_phy_mask_t rx_phy_mask);
 /**
 * @brief           This function is used to set the PHY preferences for the connection identified by the remote address.
 *                  The Controller might not be able to make the change (e.g. because the peer does not support the requested PHY)
@@ -1901,7 +2001,7 @@ esp_err_t esp_ble_gap_set_prefered_default_phy(esp_ble_gap_phy_mask_t tx_phy_mas
 *                    - other  : failed
 *
 */
-esp_err_t esp_ble_gap_set_prefered_phy(esp_bd_addr_t bd_addr,
+esp_err_t esp_ble_gap_set_preferred_phy(esp_bd_addr_t bd_addr,
                                        esp_ble_gap_all_phys_t all_phys_mask,
                                        esp_ble_gap_phy_mask_t tx_phy_mask,
                                        esp_ble_gap_phy_mask_t rx_phy_mask,
@@ -2016,6 +2116,22 @@ esp_err_t esp_ble_gap_ext_adv_set_clear(void);
 */
 esp_err_t esp_ble_gap_periodic_adv_set_params(uint8_t instance, const esp_ble_gap_periodic_adv_params_t *params);
 
+#if (CONFIG_BT_BLE_FEAT_PERIODIC_ADV_ENH)
+/**
+* @brief           This function is used to set the data used in periodic advertising PDUs.
+*
+* @param[in]       instance : identifies the advertising set whose periodic advertising parameters are being configured.
+* @param[in]       length : the length of periodic data
+* @param[in]       data : periodic data information
+* @param[in]       only_update_did : If true, only the Advertising DID of the periodic advertising will be updated, and the length and data parameters will be ignored.
+*
+* @return            - ESP_OK : success
+*                    - other  : failed
+*
+*/
+esp_err_t esp_ble_gap_config_periodic_adv_data_raw(uint8_t instance, uint16_t length,
+                                                                           const uint8_t *data, bool only_update_did);
+#else
 /**
 * @brief           This function is used to set the data used in periodic advertising PDUs.
 *
@@ -2029,6 +2145,21 @@ esp_err_t esp_ble_gap_periodic_adv_set_params(uint8_t instance, const esp_ble_ga
 */
 esp_err_t esp_ble_gap_config_periodic_adv_data_raw(uint8_t instance, uint16_t length,
                                                                            const uint8_t *data);
+#endif
+
+#if (CONFIG_BT_BLE_FEAT_PERIODIC_ADV_ENH)
+/**
+* @brief           This function is used to request the Controller to enable the periodic advertising for the advertising set specified
+*
+* @param[in]       instance : Used to identify an advertising set
+* @param[in]       include_adi : If true, the ADI (Advertising Data Info) field will be included in AUX_SYNC_IND PDUs
+*
+* @return            - ESP_OK : success
+*                    - other  : failed
+*
+*/
+esp_err_t esp_ble_gap_periodic_adv_start(uint8_t instance,bool include_adi);
+#else
 /**
 * @brief           This function is used to request the Controller to enable the periodic advertising for the advertising set specified
 *
@@ -2039,6 +2170,7 @@ esp_err_t esp_ble_gap_config_periodic_adv_data_raw(uint8_t instance, uint16_t le
 *
 */
 esp_err_t esp_ble_gap_periodic_adv_start(uint8_t instance);
+#endif
 
 /**
 * @brief           This function is used to request the Controller to disable the periodic advertising for the advertising set specified
@@ -2174,6 +2306,61 @@ esp_err_t esp_ble_gap_prefer_ext_connect_params_set(esp_bd_addr_t addr,
                                                     const esp_ble_gap_conn_params_t *phy_coded_conn_params);
 
 #endif //#if (BLE_50_FEATURE_SUPPORT == TRUE)
+
+#if (BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER == TRUE)
+/**
+* @brief           This function is used to set periodic advertising receive enable
+*
+* @param[in]       sync_handle : Handle of periodic advertising sync
+* @param[in]       enable : Determines whether reporting and duplicate filtering are enabled or disabled
+*
+* @return            - ESP_OK : success
+*                    - other  : failed
+*
+*/
+esp_err_t esp_ble_gap_periodic_adv_recv_enable(uint16_t sync_handle, uint8_t enable);
+
+/**
+* @brief           This function is used to transfer periodic advertising sync
+*
+* @param[in]       addr : Peer device address
+* @param[in]       service_data : Service data used by Host
+* @param[in]       sync_handle : Handle of periodic advertising sync
+*
+* @return            - ESP_OK : success
+*                    - other  : failed
+*
+*/
+esp_err_t esp_ble_gap_periodic_adv_sync_trans(esp_bd_addr_t addr,
+                                              uint16_t service_data, uint16_t sync_handle);
+
+/**
+* @brief           This function is used to transfer periodic advertising set info
+*
+* @param[in]       addr : Peer device address
+* @param[in]       service_data : Service data used by Host
+* @param[in]       adv_handle : Handle of advertising set
+*
+* @return            - ESP_OK : success
+*                    - other  : failed
+*
+*/
+esp_err_t esp_ble_gap_periodic_adv_set_info_trans(esp_bd_addr_t addr,
+                                                  uint16_t service_data, uint8_t adv_handle);
+
+/**
+* @brief           This function is used to set periodic advertising sync transfer params
+*
+* @param[in]       addr : Peer device address
+* @param[in]       params : Params of periodic advertising sync transfer
+*
+* @return            - ESP_OK : success
+*                    - other  : failed
+*
+*/
+esp_err_t esp_ble_gap_set_periodic_adv_sync_trans_params(esp_bd_addr_t addr,
+                                                         const esp_ble_gap_past_params_t *params);
+#endif //#if (BLE_FEAT_PERIODIC_ADV_SYNC_TRANSFER == TRUE)
 
 #ifdef __cplusplus
 }

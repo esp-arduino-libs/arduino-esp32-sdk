@@ -1,8 +1,9 @@
-esp-idf: v4.4.5 ac5d805d0e
-arduino: 447f6db6
-esp32-camera: v2.0.4 e689c3b
-esp-dl: 0632d24
-esp_littlefs: v1.5.5 9eeac09
-esp-rainmaker: b001a86
-espressif__esp-dsp: v1.4.0 8997ed9
-tinyusb: 39a64334a
+esp-idf: 6b1f40b9bf
+arduino: 40a39a3b
+esp32-camera: efe711d
+esp-dl: b0f3866
+esp_littlefs: v1.10.1 357d0fd
+esp-rainmaker: d8e9345
+esp-sr: a779e54
+tflite-micro: v1.2.0 209f3cb
+tinyusb: 118823c25

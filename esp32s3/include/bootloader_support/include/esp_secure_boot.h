@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2015-2021 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,27 +8,12 @@
 #include <stdbool.h>
 #include <esp_err.h>
 #include "soc/efuse_periph.h"
+#include "soc/soc_caps.h"
 #include "esp_image_format.h"
 #include "esp_rom_efuse.h"
 #include "sdkconfig.h"
 #include "esp_rom_crc.h"
-
-#if CONFIG_IDF_TARGET_ESP32
-#include "esp32/rom/efuse.h"
-#include "esp32/rom/secure_boot.h"
-#elif CONFIG_IDF_TARGET_ESP32S2
-#include "esp32s2/rom/efuse.h"
-#include "esp32s2/rom/secure_boot.h"
-#elif CONFIG_IDF_TARGET_ESP32C3
-#include "esp32c3/rom/efuse.h"
-#include "esp32c3/rom/secure_boot.h"
-#elif CONFIG_IDF_TARGET_ESP32S3
-#include "esp32s3/rom/efuse.h"
-#include "esp32s3/rom/secure_boot.h"
-#elif CONFIG_IDF_TARGET_ESP32H2
-#include "esp32h2/rom/efuse.h"
-#include "esp32h2/rom/secure_boot.h"
-#endif
+#include "hal/efuse_ll.h"
 
 #ifdef CONFIG_SECURE_BOOT_V1_ENABLED
 #if !defined(CONFIG_SECURE_SIGNED_ON_BOOT) || !defined(CONFIG_SECURE_SIGNED_ON_UPDATE) || !defined(CONFIG_SECURE_SIGNED_APPS)
@@ -47,6 +32,12 @@ extern "C" {
 
 #define ESP_SECURE_BOOT_DIGEST_LEN 32
 
+#if CONFIG_IDF_TARGET_ESP32C2
+#define ESP_SECURE_BOOT_KEY_DIGEST_LEN 16
+#else
+#define ESP_SECURE_BOOT_KEY_DIGEST_LEN 32
+#endif
+
 #ifdef CONFIG_EFUSE_VIRTUAL_KEEP_IN_FLASH
 #include "esp_efuse.h"
 #include "esp_efuse_table.h"
@@ -64,20 +55,20 @@ static inline bool esp_secure_boot_enabled(void)
 #if CONFIG_IDF_TARGET_ESP32
     #ifdef CONFIG_SECURE_BOOT_V1_ENABLED
         #ifndef CONFIG_EFUSE_VIRTUAL_KEEP_IN_FLASH
-            return REG_READ(EFUSE_BLK0_RDATA6_REG) & EFUSE_RD_ABS_DONE_0;
+            return efuse_ll_get_secure_boot_v1_en();
         #else
             return esp_efuse_read_field_bit(ESP_EFUSE_ABS_DONE_0);
         #endif
     #elif CONFIG_SECURE_BOOT_V2_ENABLED
         #ifndef CONFIG_EFUSE_VIRTUAL_KEEP_IN_FLASH
-            return ets_use_secure_boot_v2();
+            return efuse_ll_get_secure_boot_v2_en();
         #else
             return esp_efuse_read_field_bit(ESP_EFUSE_ABS_DONE_1);
         #endif
     #endif
 #else
     #ifndef CONFIG_EFUSE_VIRTUAL_KEEP_IN_FLASH
-        return esp_rom_efuse_is_secure_boot_enabled();
+        return efuse_ll_get_secure_boot_v2_en();
     #else
         return esp_efuse_read_field_bit(ESP_EFUSE_SECURE_BOOT_EN);
     #endif
@@ -207,22 +198,10 @@ esp_err_t esp_secure_boot_verify_ecdsa_signature_block(const esp_secure_boot_sig
  * Each image can have one or more signature blocks (up to SECURE_BOOT_NUM_BLOCKS). Each signature block includes a public key.
  */
 typedef struct {
-    uint8_t key_digests[SECURE_BOOT_NUM_BLOCKS][ESP_SECURE_BOOT_DIGEST_LEN];    /* SHA of the public key components in the signature block */
+    uint8_t key_digests[SOC_EFUSE_SECURE_BOOT_KEY_DIGESTS][ESP_SECURE_BOOT_DIGEST_LEN];    /* SHA of the public key components in the signature block */
     unsigned num_digests;                                       /* Number of valid digests, starting at index 0 */
 } esp_image_sig_public_key_digests_t;
 
-/** @brief Verify the RSA secure boot signature block for Secure Boot V2.
- *
- *  Performs RSA-PSS Verification of the SHA-256 image based on the public key
- *  in the signature block, compared against the public key digest stored in efuse.
- *
- * Similar to esp_secure_boot_verify_signature(), but can be used when the digest is precalculated.
- * @param sig_block Pointer to RSA signature block data
- * @param image_digest Pointer to 32 byte buffer holding SHA-256 hash.
- * @param verified_digest Pointer to 32 byte buffer that will receive verified digest if verification completes. (Used during bootloader implementation only, result is invalid otherwise.)
- *
- */
-esp_err_t esp_secure_boot_verify_rsa_signature_block(const ets_secure_boot_signature_t *sig_block, const uint8_t *image_digest, uint8_t *verified_digest);
 #endif // !CONFIG_IDF_TARGET_ESP32 || CONFIG_ESP32_REV_MIN_FULL >= 300
 
 /** @brief Legacy ECDSA verification function
@@ -255,7 +234,7 @@ typedef struct {
  */
 void esp_secure_boot_init_checks(void);
 
-#if !BOOTLOADER_BUILD && CONFIG_SECURE_SIGNED_APPS_RSA_SCHEME
+#if !BOOTLOADER_BUILD && (CONFIG_SECURE_SIGNED_APPS_RSA_SCHEME || CONFIG_SECURE_SIGNED_APPS_ECDSA_V2_SCHEME)
 
 /** @brief Scan the current running app for signature blocks
  *
@@ -281,7 +260,7 @@ void esp_secure_boot_init_checks(void);
  */
 esp_err_t esp_secure_boot_get_signature_blocks_for_running_app(bool digest_public_keys, esp_image_sig_public_key_digests_t *public_key_digests);
 
-#endif // !BOOTLOADER_BUILD && CONFIG_SECURE_SIGNED_APPS_RSA_SCHEME
+#endif // !BOOTLOADER_BUILD && (CONFIG_SECURE_SIGNED_APPS_RSA_SCHEME || CONFIG_SECURE_SIGNED_APPS_ECDSA_V2_SCHEME)
 
 /** @brief Set all secure eFuse features related to secure_boot
  *
@@ -289,6 +268,19 @@ esp_err_t esp_secure_boot_get_signature_blocks_for_running_app(bool digest_publi
  *  - ESP_OK - Successfully
  */
 esp_err_t esp_secure_boot_enable_secure_features(void);
+
+/** @brief Returns the verification status for all physical security features of secure boot in release mode
+ *
+ * If the device has secure boot feature configured in the release mode,
+ * then it is highly recommended to call this API in the application startup code.
+ * This API verifies the sanity of the eFuse configuration against
+ * the release (production) mode of the secure boot feature.
+ *
+ * @return
+ *  - True - all eFuses are configured correctly
+ *  - False - not all eFuses are configured correctly.
+ */
+bool esp_secure_boot_cfg_verify_release_mode(void);
 
 #ifdef __cplusplus
 }

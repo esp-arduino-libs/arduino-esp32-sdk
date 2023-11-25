@@ -1,21 +1,16 @@
-// Copyright 2019 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2019-2023 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #pragma once
 
 #include <stdbool.h>
 #include "esp_eth_com.h"
 #include "sdkconfig.h"
+#if CONFIG_ETH_USE_SPI_ETHERNET
+#include "driver/spi_master.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,12 +98,33 @@ struct esp_eth_mac_s {
     *
     * @return
     *      - ESP_OK: transmit packet successfully
-    *      - ESP_ERR_INVALID_ARG: transmit packet failed because of invalid argument
-    *      - ESP_ERR_INVALID_STATE: transmit packet failed because of wrong state of MAC
+    *      - ESP_ERR_INVALID_SIZE: number of actually sent bytes differs to expected
     *      - ESP_FAIL: transmit packet failed because some other error occurred
+    *
+    * @note Returned error codes may differ for each specific MAC chip.
     *
     */
     esp_err_t (*transmit)(esp_eth_mac_t *mac, uint8_t *buf, uint32_t length);
+
+    /**
+    * @brief Transmit packet from Ethernet MAC constructed with special parameters at Layer2.
+    *
+    * @param[in] mac: Ethernet MAC instance
+    * @param[in] argc: number variable arguments
+    * @param[in] args: variable arguments
+    *
+    * @note Typical intended use case is to make possible to construct a frame from multiple higher layer
+    *       buffers without a need of buffer reallocations. However, other use cases are not limited.
+    *
+    * @return
+    *      - ESP_OK: transmit packet successfully
+    *      - ESP_ERR_INVALID_SIZE: number of actually sent bytes differs to expected
+    *      - ESP_FAIL: transmit packet failed because some other error occurred
+    *
+    * @note Returned error codes may differ for each specific MAC chip.
+    *
+    */
+    esp_err_t (*transmit_vargs)(esp_eth_mac_t *mac, uint32_t argc, va_list args);
 
     /**
     * @brief Receive packet from Ethernet MAC
@@ -275,6 +291,23 @@ struct esp_eth_mac_s {
     esp_err_t (*set_peer_pause_ability)(esp_eth_mac_t *mac, uint32_t ability);
 
     /**
+    * @brief Custom IO function of MAC driver. This function is intended to extend common options of esp_eth_ioctl to cover specifics of MAC chip.
+    *
+    * @note This function may not be assigned when the MAC chip supports only most common set of configuration options.
+    *
+    * @param[in] mac: Ethernet MAC instance
+    * @param[in] cmd: IO control command
+    * @param[in, out] data: address of data for `set` command or address where to store the data when used with `get` command
+    *
+    * @return
+    *       - ESP_OK: process io command successfully
+    *       - ESP_ERR_INVALID_ARG: process io command failed because of some invalid argument
+    *       - ESP_FAIL: process io command failed because some other error occurred
+    *       - ESP_ERR_NOT_SUPPORTED: requested feature is not supported
+    */
+    esp_err_t (*custom_ioctl)(esp_eth_mac_t *mac, uint32_t cmd, void *data);
+
+    /**
     * @brief Free memory of Ethernet MAC
     *
     * @param[in] mac: Ethernet MAC instance
@@ -365,7 +398,6 @@ typedef union {
     } rmii; /*!< EMAC RMII Clock Configuration */
 } eth_mac_clock_config_t;
 
-
 /**
 * @brief Configuration of Ethernet MAC object
 *
@@ -374,11 +406,7 @@ typedef struct {
     uint32_t sw_reset_timeout_ms;        /*!< Software reset timeout value (Unit: ms) */
     uint32_t rx_task_stack_size;         /*!< Stack size of the receive task */
     uint32_t rx_task_prio;               /*!< Priority of the receive task */
-    int smi_mdc_gpio_num;                /*!< SMI MDC GPIO number, set to -1 could bypass the SMI GPIO configuration */
-    int smi_mdio_gpio_num;               /*!< SMI MDIO GPIO number, set to -1 could bypass the SMI GPIO configuration */
     uint32_t flags;                      /*!< Flags that specify extra capability for mac driver */
-    eth_data_interface_t interface;      /*!< EMAC Data interface to PHY (MII/RMII) */
-    eth_mac_clock_config_t clock_config; /*!< EMAC Interface clock configuration */
 } eth_mac_config_t;
 
 #define ETH_MAC_FLAG_WORK_WITH_CACHE_DISABLE (1 << 0) /*!< MAC driver can work when cache is disabled */
@@ -393,32 +421,151 @@ typedef struct {
         .sw_reset_timeout_ms = 100,                       \
         .rx_task_stack_size = 2048,                       \
         .rx_task_prio = 15,                               \
-        .smi_mdc_gpio_num = 23,                           \
-        .smi_mdio_gpio_num = 18,                          \
         .flags = 0,                                       \
-        .interface = EMAC_DATA_INTERFACE_RMII,            \
-        .clock_config =                                   \
-        {                                                 \
-            .rmii =                                       \
-            {                                             \
-                .clock_mode = EMAC_CLK_DEFAULT,           \
-                .clock_gpio = EMAC_CLK_IN_GPIO            \
-            }                                             \
-        }                                                 \
     }
 
 #if CONFIG_ETH_USE_ESP32_EMAC
 /**
+* @brief EMAC specific configuration
+*
+*/
+typedef struct {
+    int smi_mdc_gpio_num;                   /*!< SMI MDC GPIO number, set to -1 could bypass the SMI GPIO configuration */
+    int smi_mdio_gpio_num;                  /*!< SMI MDIO GPIO number, set to -1 could bypass the SMI GPIO configuration */
+    eth_data_interface_t interface;         /*!< EMAC Data interface to PHY (MII/RMII) */
+    eth_mac_clock_config_t clock_config;    /*!< EMAC Interface clock configuration */
+    eth_mac_dma_burst_len_t dma_burst_len;  /*!< EMAC DMA burst length for both Tx and Rx */
+} eth_esp32_emac_config_t;
+
+/**
+ * @brief Default ESP32's EMAC specific configuration
+ *
+ */
+#define ETH_ESP32_EMAC_DEFAULT_CONFIG()               \
+    {                                                 \
+        .smi_mdc_gpio_num = 23,                       \
+        .smi_mdio_gpio_num = 18,                      \
+        .interface = EMAC_DATA_INTERFACE_RMII,        \
+        .clock_config =                               \
+        {                                             \
+            .rmii =                                   \
+            {                                         \
+                .clock_mode = EMAC_CLK_DEFAULT,       \
+                .clock_gpio = EMAC_CLK_IN_GPIO        \
+            }                                         \
+        },                                            \
+        .dma_burst_len = ETH_DMA_BURST_LEN_32         \
+    }
+
+/**
 * @brief Create ESP32 Ethernet MAC instance
 *
+* @param esp32_config: EMAC specific configuration
 * @param config:       Ethernet MAC configuration
 *
 * @return
 *      - instance: create MAC instance successfully
 *      - NULL: create MAC instance failed because some error occurred
 */
-esp_eth_mac_t *esp_eth_mac_new_esp32(const eth_mac_config_t *config);
+esp_eth_mac_t *esp_eth_mac_new_esp32(const eth_esp32_emac_config_t *esp32_config, const eth_mac_config_t *config);
 #endif // CONFIG_ETH_USE_ESP32_EMAC
+
+#if CONFIG_ETH_USE_SPI_ETHERNET
+/**
+ * @brief Custom SPI Driver Configuration.
+ * This structure declares configuration and callback functions to access Ethernet SPI module via
+ * user's custom SPI driver.
+ *
+ */
+typedef struct
+{
+    /**
+     * @brief Custom driver specific configuration data used by `init()` function.
+     *
+     * @note Type and its content is fully under user's control
+     *
+     */
+    void *config;
+
+    /**
+     * @brief Custom driver SPI Initialization
+     *
+     * @param[in] spi_config: Custom driver specific configuration
+     *
+     * @return
+     *      - spi_ctx: when initialization is successful, a pointer to context structure holding all variables
+     *          needed for subsequent SPI access operations (e.g. SPI bus identification, mutexes, etc.)
+     *      - NULL: driver initialization failed
+     *
+     * @note return type and its content is fully under user's control
+     */
+    void *(*init)(const void *spi_config);
+
+    /**
+     * @brief Custom driver De-initialization
+     *
+     * @param[in] spi_ctx: a pointer to driver specific context structure
+     *
+     * @return
+     *      - ESP_OK: driver de-initialization was successful
+     *      - ESP_FAIL: driver de-initialization failed
+     *      - any other failure codes are allowed to be used to provide failure isolation
+     */
+    esp_err_t (*deinit)(void *spi_ctx);
+
+    /**
+     * @brief Custom driver SPI read
+     *
+     * @note The read function is responsible to construct command, address and data fields
+     * of the SPI frame in format expected by particular SPI Ethernet module
+     *
+     * @param[in] spi_ctx: a pointer to driver specific context structure
+     * @param[in] cmd: command
+     * @param[in] addr: register address
+     * @param[out] data: read data
+     * @param[in] data_len: read data length in bytes
+     *
+     * @return
+     *      - ESP_OK: read was successful
+     *      - ESP_FAIL: read failed
+     *      - any other failure codes are allowed to be used to provide failure isolation
+     */
+    esp_err_t (*read)(void *spi_ctx, uint32_t cmd, uint32_t addr, void *data, uint32_t data_len);
+
+    /**
+     * @brief Custom driver SPI write
+     *
+     * @note The write function is responsible to construct command, address and data fields
+     * of the SPI frame in format expected by particular SPI Ethernet module
+     *
+     * @param[in] spi_ctx: a pointer to driver specific context structure
+     * @param[in] cmd: command
+     * @param[in] addr: register address
+     * @param[in] data: data to write
+     * @param[in] data_len: length of data to write in bytes
+     *
+     * @return
+     *      - ESP_OK: write was successful
+     *      - ESP_FAIL: write failed
+     *      - any other failure codes are allowed to be used to provide failure isolation
+     */
+    esp_err_t (*write)(void *spi_ctx, uint32_t cmd, uint32_t addr, const void *data, uint32_t data_len);
+} eth_spi_custom_driver_t;
+
+/**
+ * @brief Default configuration of the custom SPI driver.
+ * Internal ESP-IDF SPI Master driver is used by default.
+ *
+ */
+#define ETH_DEFAULT_SPI  \
+    {                    \
+        .config = NULL,  \
+        .init = NULL,    \
+        .deinit = NULL,  \
+        .read = NULL,    \
+        .write = NULL    \
+    }
+#endif // CONFIG_ETH_USE_SPI_ETHERNET
 
 #if CONFIG_ETH_SPI_ETHERNET_DM9051
 /**
@@ -426,18 +573,22 @@ esp_eth_mac_t *esp_eth_mac_new_esp32(const eth_mac_config_t *config);
  *
  */
 typedef struct {
-    void *spi_hdl;     /*!< Handle of SPI device driver */
-    int int_gpio_num;  /*!< Interrupt GPIO number */
+    int int_gpio_num;                           /*!< Interrupt GPIO number */
+    spi_host_device_t spi_host_id;              /*!< SPI peripheral (this field is invalid when custom SPI driver is defined) */
+    spi_device_interface_config_t *spi_devcfg;  /*!< SPI device configuration (this field is invalid when custom SPI driver is defined) */
+    eth_spi_custom_driver_t custom_spi_driver;  /*!< Custom SPI driver definitions */
 } eth_dm9051_config_t;
 
 /**
  * @brief Default DM9051 specific configuration
  *
  */
-#define ETH_DM9051_DEFAULT_CONFIG(spi_device) \
-    {                                         \
-        .spi_hdl = spi_device,                \
-        .int_gpio_num = 4,                    \
+#define ETH_DM9051_DEFAULT_CONFIG(spi_host, spi_devcfg_p) \
+    {                                           \
+        .int_gpio_num = 4,                      \
+        .spi_host_id = spi_host,                \
+        .spi_devcfg = spi_devcfg_p,             \
+        .custom_spi_driver = ETH_DEFAULT_SPI, \
     }
 
 /**
@@ -459,18 +610,22 @@ esp_eth_mac_t *esp_eth_mac_new_dm9051(const eth_dm9051_config_t *dm9051_config, 
  *
  */
 typedef struct {
-    void *spi_hdl;     /*!< Handle of SPI device driver */
-    int int_gpio_num;  /*!< Interrupt GPIO number */
+    int int_gpio_num;                           /*!< Interrupt GPIO number */
+    spi_host_device_t spi_host_id;              /*!< SPI peripheral (this field is invalid when custom SPI driver is defined)*/
+    spi_device_interface_config_t *spi_devcfg;  /*!< SPI device configuration (this field is invalid when custom SPI driver is defined)*/
+    eth_spi_custom_driver_t custom_spi_driver;  /*!< Custom SPI driver definitions */
 } eth_w5500_config_t;
 
 /**
  * @brief Default W5500 specific configuration
  *
  */
-#define ETH_W5500_DEFAULT_CONFIG(spi_device) \
-    {                                        \
-        .spi_hdl = spi_device,               \
-        .int_gpio_num = 4,                   \
+#define ETH_W5500_DEFAULT_CONFIG(spi_host, spi_devcfg_p) \
+    {                                           \
+        .int_gpio_num = 4,                      \
+        .spi_host_id = spi_host,                \
+        .spi_devcfg = spi_devcfg_p,             \
+        .custom_spi_driver = ETH_DEFAULT_SPI, \
     }
 
 /**
@@ -492,18 +647,22 @@ esp_eth_mac_t *esp_eth_mac_new_w5500(const eth_w5500_config_t *w5500_config, con
  *
  */
 typedef struct {
-    void *spi_hdl;     /*!< Handle of SPI device driver */
-    int int_gpio_num;  /*!< Interrupt GPIO number */
+    int int_gpio_num;                           /*!< Interrupt GPIO number */
+    spi_host_device_t spi_host_id;              /*!< SPI peripheral (this field is invalid when custom SPI driver is defined) */
+    spi_device_interface_config_t *spi_devcfg;  /*!< SPI device configuration (this field is invalid when custom SPI driver is defined) */
+    eth_spi_custom_driver_t custom_spi_driver;  /*!< Custom SPI driver definitions */
 } eth_ksz8851snl_config_t;
 
 /**
  * @brief Default KSZ8851SNL specific configuration
  *
  */
-#define ETH_KSZ8851SNL_DEFAULT_CONFIG(spi_device) \
-    {                                        \
-        .spi_hdl = spi_device,               \
-        .int_gpio_num = 14,                   \
+#define ETH_KSZ8851SNL_DEFAULT_CONFIG(spi_host, spi_devcfg_p) \
+    {                                               \
+        .int_gpio_num = 4,                          \
+        .spi_host_id = spi_host,                    \
+        .spi_devcfg = spi_devcfg_p,                 \
+        .custom_spi_driver = ETH_DEFAULT_SPI,     \
     }
 
 /**

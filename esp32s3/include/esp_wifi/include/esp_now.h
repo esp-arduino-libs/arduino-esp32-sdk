@@ -81,12 +81,32 @@ typedef struct esp_now_peer_num {
 } esp_now_peer_num_t;
 
 /**
+ * @brief ESPNOW packet information
+ */
+typedef struct esp_now_recv_info {
+    uint8_t * src_addr;                      /**< Source address of ESPNOW packet */
+    uint8_t * des_addr;                      /**< Destination address of ESPNOW packet */
+    wifi_pkt_rx_ctrl_t * rx_ctrl;            /**< Rx control info of ESPNOW packet */
+} esp_now_recv_info_t;
+
+/**
+ * @brief ESPNOW rate config
+ *
+ */
+typedef struct esp_now_rate_config {
+    wifi_phy_mode_t phymode;                 /**< ESPNOW phymode of specified interface */
+    wifi_phy_rate_t rate;                    /**< ESPNOW rate of specified interface*/
+    bool ersu;                               /**< ESPNOW using ersu send frame*/
+} esp_now_rate_config_t;
+
+/**
   * @brief     Callback function of receiving ESPNOW data
-  * @param     mac_addr peer MAC address
+  * @param     esp_now_info received ESPNOW packet information
   * @param     data received data
   * @param     data_len length of received data
+  * @attention esp_now_info is a local variable，it can only be used in the callback.
   */
-typedef void (*esp_now_recv_cb_t)(const uint8_t *mac_addr, const uint8_t *data, int data_len);
+typedef void (*esp_now_recv_cb_t)(const esp_now_recv_info_t * esp_now_info, const uint8_t *data, int data_len);
 
 /**
   * @brief     Callback function of sending ESPNOW data
@@ -232,7 +252,10 @@ esp_err_t esp_now_mod_peer(const esp_now_peer_info_t *peer);
 /**
   * @brief      Config ESPNOW rate of specified interface
   *
+  * @deprecated please use esp_now_set_peer_rate_config() instead.
+  *
   * @attention  1. This API should be called after esp_wifi_start().
+  * @attention  2. This API only work when not use Wi-Fi 6 and esp_now_set_peer_rate_config() not called.
   *
   * @param      ifx  Interface to be configured.
   * @param      rate Phy rate to be configured.
@@ -241,7 +264,25 @@ esp_err_t esp_now_mod_peer(const esp_now_peer_info_t *peer);
   *    - ESP_OK: succeed
   *    - others: failed
   */
-esp_err_t esp_wifi_config_espnow_rate(wifi_interface_t ifx, wifi_phy_rate_t rate);
+esp_err_t esp_wifi_config_espnow_rate(wifi_interface_t ifx, wifi_phy_rate_t rate)
+      __attribute__((deprecated("This API can be only used when rate is non-HE rate, \
+                                please use esp_now_set_peer_rate_config if you want full support of the rate.")));
+
+/**
+  * @brief      Set ESPNOW rate config for each peer
+  *
+  * @attention  1. This API should be called after esp_wifi_start() and esp_now_init().
+  *
+  * @param      peer_addr  peer MAC address
+  * @param      config rate config to be configured.
+  *
+  * @return
+  *          - ESP_OK : succeed
+  *          - ESP_ERR_ESPNOW_NOT_INIT : ESPNOW is not initialized
+  *          - ESP_ERR_ESPNOW_ARG : invalid argument
+  *          - ESP_ERR_ESPNOW_INTERNAL : internal error
+  */
+esp_err_t esp_now_set_peer_rate_config(const uint8_t *peer_addr, esp_now_rate_config_t *config);
 
 /**
   * @brief     Get a peer whose MAC address matches peer_addr from peer list
@@ -309,15 +350,13 @@ esp_err_t esp_now_get_peer_num(esp_now_peer_num_t *num);
 esp_err_t esp_now_set_pmk(const uint8_t *pmk);
 
 /**
-  * @brief     Set esp_now wake window for sta_disconnected power management
+  * @brief     Set wake window for esp_now to wake up in interval unit
   *
-  * @param     window  how much microsecond would the chip keep waked each interval, vary from 0 to 65535
+  * @param     window  Milliseconds would the chip keep waked each interval, from 0 to 65535.
   *
-  * @attention 1. Only when ESP_WIFI_STA_DISCONNECTED_PM_ENABLE is enabled, this configuration could work
-  * @attention 2. This configuration only work for station mode and disconnected status
-  * @attention 3. If more than one module has configured its wake_window, chip would choose the largest one to stay waked
-  * @attention 4. If the gap between interval and window is smaller than 5ms, the chip would keep waked all the time
-  * @attention 5. If never configured wake_window, the chip would keep waked at disconnected once it uses esp_now
+  * @attention 1. This configuration could work at connected status.
+  *               When ESP_WIFI_STA_DISCONNECTED_PM_ENABLE is enabled, this configuration could work at disconnected status.
+  * @attention 2. Default value is the maximum.
   *
   * @return
   *          - ESP_OK : succeed

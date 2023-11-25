@@ -1,16 +1,11 @@
-// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+/*
+ * SPDX-FileCopyrightText: 2022-2023 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+#pragma once
+
 
 #ifndef _ROM_CACHE_H_
 #define _ROM_CACHE_H_
@@ -47,29 +42,6 @@ extern "C" {
 #define MAX_ITAG_BLOCK_SIZE             (MAX_ITAG_BLOCK_ITEMS * TAG_SIZE)
 
 typedef enum {
-    CACHE_DCACHE = 0,
-    CACHE_ICACHE0 = 1,
-    CACHE_ICACHE1 = 2,
-} cache_t;
-
-typedef enum {
-    CACHE_MEMORY_INVALID = 0,
-    CACHE_MEMORY_IBANK0 = BIT(0),
-    CACHE_MEMORY_IBANK1 = BIT(1),
-    CACHE_MEMORY_IBANK2 = BIT(2),
-    CACHE_MEMORY_IBANK3 = BIT(3),
-    CACHE_MEMORY_DBANK0 = BIT(0),
-    CACHE_MEMORY_DBANK1 = BIT(1),
-    CACHE_MEMORY_DBANK2 = BIT(2),
-    CACHE_MEMORY_DBANK3 = BIT(3),
-} cache_array_t;
-
-#define ICACHE_SIZE_16KB  CACHE_SIZE_HALF
-#define ICACHE_SIZE_32KB  CACHE_SIZE_FULL
-#define DCACHE_SIZE_32KB  CACHE_SIZE_HALF
-#define DCACHE_SIZE_64KB  CACHE_SIZE_FULL
-
-typedef enum {
     CACHE_SIZE_HALF = 0,                /*!< 8KB for icache and dcache */
     CACHE_SIZE_FULL = 1,                /*!< 16KB for icache and dcache */
 } cache_size_t;
@@ -102,6 +74,14 @@ typedef enum {
     CACHE_FREEZE_ACK_BUSY = 0,          /*!< in this mode, cache ack busy to CPU if a cache miss happens*/
     CACHE_FREEZE_ACK_ERROR  = 1,        /*!< in this mode, cache ack wrong data to CPU and trigger an error if a cache miss happens */
 } cache_freeze_mode_t;
+
+typedef enum {
+    MMU_PAGE_MODE_64KB = 0,
+    MMU_PAGE_MODE_32KB = 1,
+    MMU_PAGE_MODE_16KB = 2,
+    MMU_PAGE_MODE_8KB = 3,
+    MMU_PAGE_MODE_INVALID,
+} mmu_page_mode_t;
 
 struct cache_mode {
     uint32_t cache_size;                /*!< cache size in byte */
@@ -190,8 +170,19 @@ extern const cache_op_cb_t* rom_cache_op_cb;
 void Cache_MMU_Init(void);
 
 /**
+  * @brief Init Cache for ROM boot, including resetting the Icache, initializing MMU, Enabling ICache, unmasking bus.
+  *
+  * @param None
+  *
+  * @return None
+  */
+void ROM_Boot_Cache_Init(void);
+
+/**
   * @brief Set ICache mmu mapping.
   *        Please do not call this function in your SDK application.
+  *
+  * @param uint32_t senitive : Config this page should apply flash encryption or not
   *
   * @param uint32_t ext_ram : DPORT_MMU_ACCESS_FLASH for flash, DPORT_MMU_INVALID for invalid. In
   *                 esp32h2, external memory is always flash
@@ -215,14 +206,14 @@ void Cache_MMU_Init(void);
   *                   3 : psize error
   *                   4 : vaddr is out of range
   */
-int Cache_Ibus_MMU_Set(uint32_t ext_ram, uint32_t vaddr, uint32_t paddr,  uint32_t psize, uint32_t num, uint32_t fixed);
+int Cache_MSPI_MMU_Set(uint32_t sensitive, uint32_t ext_ram, uint32_t vaddr, uint32_t paddr,  uint32_t psize, uint32_t num, uint32_t fixed);
 
 /**
   * @brief Set DCache mmu mapping.
   *        Please do not call this function in your SDK application.
   *
   * @param uint32_t ext_ram : DPORT_MMU_ACCESS_FLASH for flash, DPORT_MMU_INVALID for invalid. In
-  *                 esp32h2, external memory is always flash
+  *                 esp32c3, external memory is always flash
   *
   * @param  uint32_t vaddr : virtual address in CPU address space.
   *                              Can be DRam0, DRam1, DRom0, DPort and AHB buses address.
@@ -246,28 +237,6 @@ int Cache_Ibus_MMU_Set(uint32_t ext_ram, uint32_t vaddr, uint32_t paddr,  uint32
 int Cache_Dbus_MMU_Set(uint32_t ext_ram, uint32_t vaddr, uint32_t paddr, uint32_t psize, uint32_t num, uint32_t fixed);
 
 /**
-  * @brief Count the pages in the bus room address which map to Flash.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param uint32_t bus : the bus to count with.
-  *
-  * @param uint32_t * page0_mapped : value should be initial by user, 0 for not mapped, other for mapped count.
-  *
-  * return uint32_t : the number of pages which map to Flash.
-  */
-uint32_t Cache_Count_Flash_Pages(uint32_t bus, uint32_t * page0_mapped);
-
-/**
-  * @brief allocate memory to used by ICache.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param cache_array_t icache_low : the data array bank used by icache low part. Due to timing constraint, can only be CACHE_MEMORY_INVALID, CACHE_MEMORY_IBANK0
-  *
-  * return none
-  */
-void Cache_Occupy_ICache_MEMORY(cache_array_t icache_low);
-
-/**
   * @brief Get cache mode of ICache or DCache.
   *        Please do not call this function in your SDK application.
   *
@@ -278,61 +247,22 @@ void Cache_Occupy_ICache_MEMORY(cache_array_t icache_low);
 void Cache_Get_Mode(struct cache_mode * mode);
 
 /**
-  * @brief set ICache modes: cache size, associate ways and cache line size.
-  *        Please do not call this function in your SDK application.
+  * @brief Set cache page mode.
   *
-  * @param cache_size_t cache_size : the cache size, can be CACHE_SIZE_HALF and CACHE_SIZE_FULL
-  *
-  * @param cache_ways_t ways : the associate ways of cache, can be CACHE_4WAYS_ASSOC and CACHE_8WAYS_ASSOC
-  *
-  * @param cache_line_size_t cache_line_size : the cache line size, can be CACHE_LINE_SIZE_16B, CACHE_LINE_SIZE_32B and CACHE_LINE_SIZE_64B
-  *
-  * return none
-  */
-void Cache_Set_ICache_Mode(cache_size_t cache_size, cache_ways_t ways, cache_line_size_t cache_line_size);
-
-/**
-  * @brief set DCache modes: cache size, associate ways and cache line size.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param cache_size_t cache_size : the cache size, can be CACHE_SIZE_8KB and CACHE_SIZE_16KB
-  *
-  * @param cache_ways_t ways : the associate ways of cache, can be CACHE_4WAYS_ASSOC and CACHE_8WAYS_ASSOC
-  *
-  * @param cache_line_size_t cache_line_size : the cache line size, can be CACHE_LINE_SIZE_16B, CACHE_LINE_SIZE_32B and CACHE_LINE_SIZE_64B
-  *
-  * return none
-  */
-void Cache_Set_DCache_Mode(cache_size_t cache_size, cache_ways_t ways, cache_line_size_t cache_line_size);
-
-/**
-  * @brief check if the address is accessed through ICache.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t addr : the address to check.
-  *
-  * @return 1 if the address is accessed through ICache, 0 if not.
-  */
-uint32_t Cache_Address_Through_ICache(uint32_t addr);
-
-/**
-  * @brief check if the address is accessed through DCache.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t addr : the address to check.
-  *
-  * @return 1 if the address is accessed through DCache, 0 if not.
-  */
-uint32_t Cache_Address_Through_DCache(uint32_t addr);
-
-/**
-  * @brief Init mmu owner register to make i/d cache use half mmu entries.
-  *
-  * @param None
+  * @param mmu_page_mode_t
   *
   * @return None
   */
-void Cache_Owner_Init(void);
+void MMU_Set_Page_Mode(mmu_page_mode_t pg_mode);
+
+/**
+  * @brief Get cache page mode.
+  *
+  * @param None
+  *
+  * @return page mode
+  */
+mmu_page_mode_t MMU_Get_Page_Mode(void);
 
 /**
   * @brief Invalidate the cache items for ICache.
@@ -593,24 +523,6 @@ void Cache_Resume_ICache(uint32_t autoload);
 uint32_t Cache_Get_ICache_Line_Size(void);
 
 /**
-  * @brief Set default mode from boot, 8KB ICache, 16Byte cache line size.
-  *
-  * @param  None
-  *
-  * @return None
-  */
-void Cache_Set_Default_Mode(void);
-
-/**
-  * @brief Set default mode from boot, 8KB ICache, 16Byte cache line size.
-  *
-  * @param None
-  *
-  * @return None
-  */
-void Cache_Enable_Defalut_ICache_Mode(void);
-
-/**
   * @brief Enable freeze for ICache.
   *        Any miss request will be rejected, including cpu miss and preload/autoload miss.
   *        Please do not call this function in your SDK application.
@@ -661,41 +573,6 @@ void Cache_Travel_Tag_Memory(struct cache_mode * mode, uint32_t filter_addr, voi
 uint32_t Cache_Get_Virtual_Addr(struct cache_mode *mode, uint32_t tag, uint32_t vaddr_offset);
 
 /**
-  * @brief Get cache memory block base address.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t icache : 0 for dcache, other for icache.
-  *
-  * @param  uint32_t bank_no : 0 ~ 3 bank.
-  *
-  * @return uint32_t : the cache memory block base address, 0 if the block not used.
-  */
-uint32_t Cache_Get_Memory_BaseAddr(uint32_t icache, uint32_t bank_no);
-
-/**
-  * @brief Get the cache memory address from cache mode, cache memory offset and the virtual address offset of cache ways.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param  struct cache_mode * mode : the cache to calculate the virtual address and the cache mode.
-  *
-  * @param  uint32_t cache_memory_offset : the cache memory offset of the whole cache (ICache or DCache) for the cache line.
-  *
-  * @param  uint32_t addr_offset : the virtual address offset of the cache ways.
-  *
-  * @return uint32_t : the virtual address.
-  */
-uint32_t Cache_Get_Memory_Addr(struct cache_mode *mode, uint32_t cache_memory_offset, uint32_t vaddr_offset);
-
-/**
-  * @brief Get the cache memory value by DRAM address.
-  *        Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t cache_memory_addr : DRAM address for the cache memory, should be 4 byte aligned for IBus address.
-  *
-  * @return uint32_t : the word value of the address.
-  */
-uint32_t Cache_Get_Memory_value(uint32_t cache_memory_addr);
-/**
   * @}
   */
 
@@ -720,74 +597,15 @@ uint32_t Cache_Get_IROM_MMU_End(void);
 uint32_t Cache_Get_DROM_MMU_End(void);
 
 /**
-  * @brief  Lock the permission control section configuration. After lock, any
-  *         configuration modification will be bypass. Digital reset will clear the lock!
-  *         Please do not call this function in your SDK application.
-  *
-  * @param  int ibus : 1 for lock ibus pms, 0 for lock dbus pms
-  *
-  * @return None
-  */
-void Cache_Pms_Lock(int ibus);
+ * @brief Configure cache MMU page size according to instruction and rodata size
+ *
+ * @param irom_size The instruction cache MMU page size
+ * @param drom_size The rodata data cache MMU page size
+ */
+void Cache_Set_IDROM_MMU_Size(uint32_t irom_size, uint32_t drom_size);
 
-/**
-  * @brief  Set three ibus pms boundary address, which will determine pms reject section and section 1/2.
-  *         Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t ibus_boundary0_addr : vaddress for split line0
-  *
-  * @param  uint32_t ibus_boundary1_addr : vaddress for split line1
-  *
-  * @param  uint32_t ibus_boundary2_addr : vaddress for split line2
-  *
-  * @return int : ESP_ROM_ERR_INVALID_ARG for invalid address, 0 for success
-  */
-int Cache_Ibus_Pms_Set_Addr(uint32_t ibus_boundary0_addr, uint32_t ibus_boundary1_addr, uint32_t ibus_boundary2_addr);
-
-/**
-  * @brief  Set three ibus pms attribute, which will determine pms in different section and world.
-  *         Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t ibus_pms_sct2_attr : attr for section2
-  *
-  * @param  uint32_t ibus_pms_sct1_attr : attr for section1
-  *
-  * @return None
-  */
-void Cache_Ibus_Pms_Set_Attr(uint32_t ibus_pms_sct2_attr, uint32_t ibus_pms_sct1_attr);
-
-/**
-  * @brief  Set three dbus pms boundary address, which will determine pms reject section and section 1/2.
-  *         Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t dbus_boundary0_addr : vaddress for split line0
-  *
-  * @param  uint32_t dbus_boundary1_addr : vaddress for split line1
-  *
-  * @param  uint32_t dbus_boundary2_addr : vaddress for split line2
-  *
-  * @return int : ESP_ROM_ERR_INVALID_ARG for invalid address, 0 for success
-  */
-int Cache_Dbus_Pms_Set_Addr(uint32_t dbus_boundary0_addr, uint32_t dbus_boundary1_addr, uint32_t dbus_boundary2_addr);
-
-/**
-  * @brief  Set three dbus pms attribute, which will determine pms in different section and world.
-  *         Please do not call this function in your SDK application.
-  *
-  * @param  uint32_t dbus_pms_sct2_attr : attr for section2
-  *
-  * @param  uint32_t dbus_pms_sct1_attr : attr for section1
-  *
-  * @return None
-  */
-void Cache_Dbus_Pms_Set_Attr(uint32_t dbus_pms_sct2_attr, uint32_t dbus_pms_sct1_attr);
-
-/**
-  * @brief Used by SPI flash mmap
-  *
-  */
-uint32_t flash_instr_rodata_start_page(uint32_t bus);
-uint32_t flash_instr_rodata_end_page(uint32_t bus);
+#define Cache_Dbus_MMU_Set(ext_ram, vaddr, paddr, psize, num, fixed) \
+    Cache_MSPI_MMU_Set(ets_efuse_cache_encryption_enabled() ? MMU_SENSITIVE : 0, ext_ram, vaddr, paddr, psize, num, fixed)
 
 #ifdef __cplusplus
 }

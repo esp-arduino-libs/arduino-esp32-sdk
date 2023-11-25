@@ -1,21 +1,20 @@
-// Copyright 2015-2016 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #ifndef _ROM_CACHE_H_
 #define _ROM_CACHE_H_
 
-#include "soc/dport_access.h"
+#include "esp_attr.h"
+#if __has_include("dport_access.h")
+    #include "dport_access.h"
+#else
+    #pragma message("For ESP32 with ECO version < 2, you need to use a DPORT workaround that stalls the other CPU")
+    #define DPORT_STALL_OTHER_CPU_START()
+    #define DPORT_STALL_OTHER_CPU_END()
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,7 +65,7 @@ void mmu_init(int cpu_no);
   *                   4 : mmu table to be written is out of range
   *                   5 : vaddr is out of range
   */
-static inline unsigned int IRAM_ATTR cache_flash_mmu_set(int cpu_no, int pid, unsigned int vaddr, unsigned int paddr,  int psize, int num)
+static inline __attribute__((always_inline)) unsigned int IRAM_ATTR cache_flash_mmu_set(int cpu_no, int pid, unsigned int vaddr, unsigned int paddr,  int psize, int num)
 {
     extern unsigned int cache_flash_mmu_set_rom(int cpu_no, int pid, unsigned int vaddr, unsigned int paddr,  int psize, int num);
 
@@ -119,7 +118,7 @@ unsigned int IRAM_ATTR cache_sram_mmu_set(int cpu_no, int pid, unsigned int vadd
   *
   * @return None
   */
-static inline void IRAM_ATTR Cache_Read_Init(int cpu_no)
+static inline __attribute__((always_inline)) void IRAM_ATTR Cache_Read_Init(int cpu_no)
 {
     extern void Cache_Read_Init_rom(int cpu_no);
     DPORT_STALL_OTHER_CPU_START();
@@ -135,7 +134,7 @@ static inline void IRAM_ATTR Cache_Read_Init(int cpu_no)
   *
   * @return None
   */
-static inline void IRAM_ATTR Cache_Flush(int cpu_no)
+static inline __attribute__((always_inline)) void IRAM_ATTR Cache_Flush(int cpu_no)
 {
     extern void Cache_Flush_rom(int cpu_no);
     DPORT_STALL_OTHER_CPU_START();
@@ -151,7 +150,7 @@ static inline void IRAM_ATTR Cache_Flush(int cpu_no)
   *
   * @return None
   */
-static inline void IRAM_ATTR Cache_Read_Disable(int cpu_no)
+static inline __attribute__((always_inline)) void IRAM_ATTR Cache_Read_Disable(int cpu_no)
 {
     extern void Cache_Read_Disable_rom(int cpu_no);
     DPORT_STALL_OTHER_CPU_START();
@@ -167,7 +166,7 @@ static inline void IRAM_ATTR Cache_Read_Disable(int cpu_no)
   *
   * @return None
   */
-static inline void IRAM_ATTR Cache_Read_Enable(int cpu_no)
+static inline __attribute__((always_inline)) void IRAM_ATTR Cache_Read_Enable(int cpu_no)
 {
     extern void Cache_Read_Enable_rom(int cpu_no);
     DPORT_STALL_OTHER_CPU_START();

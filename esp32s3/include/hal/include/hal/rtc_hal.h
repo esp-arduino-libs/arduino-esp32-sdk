@@ -1,23 +1,16 @@
-// Copyright 2020 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2020-2022 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 #pragma once
 
+#include <stdint.h>
 #include "soc/soc_caps.h"
 #include "hal/gpio_types.h"
 #include "hal/rtc_cntl_ll.h"
-#if !CONFIG_IDF_TARGET_ESP32C3 && !CONFIG_IDF_TARGET_ESP32H2
+#if SOC_RTCIO_INPUT_OUTPUT_SUPPORTED
 #include "hal/rtc_io_ll.h"
 #endif
 
@@ -46,7 +39,7 @@ typedef struct rtc_cntl_sleep_retent {
 
 #define RTC_HAL_DMA_LINK_NODE_SIZE      (16)
 
-#if SOC_PM_SUPPORT_EXT_WAKEUP
+#if SOC_PM_SUPPORT_EXT1_WAKEUP
 
 #define rtc_hal_ext1_get_wakeup_status()                  rtc_cntl_ll_ext1_get_wakeup_status()
 
@@ -58,9 +51,9 @@ typedef struct rtc_cntl_sleep_retent {
 
 #define rtc_hal_ext1_get_wakeup_pins()                    rtc_cntl_ll_ext1_get_wakeup_pins()
 
-#endif
+#endif // SOC_PM_SUPPORT_EXT1_WAKEUP
 
-#if SOC_GPIO_SUPPORT_DEEPSLEEP_WAKEUP
+#if SOC_GPIO_SUPPORT_DEEPSLEEP_WAKEUP && (SOC_RTCIO_PIN_COUNT == 0)
 
 #define rtc_hal_gpio_get_wakeup_status()                  rtc_cntl_ll_gpio_get_wakeup_status()
 

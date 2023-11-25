@@ -1,16 +1,8 @@
-// Copyright 2015-2019 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #ifndef ESP_CORE_DUMP_H_
 #define ESP_CORE_DUMP_H_
 
@@ -134,6 +126,30 @@ esp_err_t esp_core_dump_image_get(size_t* out_addr, size_t *out_size);
 esp_err_t esp_core_dump_image_erase(void);
 
 #if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH && CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF
+
+/**
+ * @brief Get panic reason from the core dump.
+ *
+ * This function retrieves the panic reason from the core dump data and copies it to the provided buffer.
+ *
+ * @param[in,out] reason_buffer Pointer to the buffer where the panic reason will be copied.
+ * @param[in] buffer_size Size of the destination buffer in bytes.
+ * @return
+ *     - ESP_OK if the panic reason was successfully copied.
+ *     - ESP_ERR_INVALID_ARG if reason_buffer is NULL or buffer_size is 0.
+ *     - Other error codes indicating the outcome of the core dump retrieval.
+ *     - ESP_ERR_NOT_FOUND if the panic reason is not found in the core dump.
+ *
+ * Example usage:
+ * @code{c}
+	char panic_reason[200];
+	esp_err_t err = esp_core_dump_get_panic_reason(panic_reason, sizeof(panic_reason));
+	if (err == ESP_OK) {
+		ESP_LOGW(TAG, "%s", panic_reason);
+	}
+ * @endcode
+ */
+esp_err_t esp_core_dump_get_panic_reason(char *reason_buffer, size_t buffer_size);
 
 /**
  * @brief  Get the summary of a core dump.

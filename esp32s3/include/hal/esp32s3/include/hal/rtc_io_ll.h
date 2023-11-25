@@ -13,19 +13,17 @@
 #pragma once
 
 #include <stdlib.h>
-#include "soc/rtc_io_periph.h"
-#include "soc/rtc_io_struct.h"
-#include "hal/rtc_io_types.h"
+#include "soc/rtc_periph.h"
 #include "hal/gpio_types.h"
 #include "soc/io_mux_reg.h"
 #include "soc/usb_serial_jtag_reg.h"
 #include "soc/usb_serial_jtag_struct.h"
 
-#define RTCIO_LL_PIN_FUNC     0
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define RTCIO_LL_PIN_FUNC     0
 
 typedef enum {
     RTCIO_FUNC_RTC = 0x0,         /*!< The pin controled by RTC module. */
@@ -320,7 +318,7 @@ static inline void rtcio_ll_enable_output_in_sleep(gpio_num_t gpio_num)
  *
  * @param rtcio_num The index of rtcio. 0 ~ MAX(rtcio).
  */
-static inline void rtcio_ll_in_sleep_disable_output(gpio_num_t gpio_num)
+static inline void rtcio_ll_disable_output_in_sleep(gpio_num_t gpio_num)
 {
     if (rtc_io_desc[gpio_num].slpoe) {
         CLEAR_PERI_REG_MASK(rtc_io_desc[gpio_num].reg, rtc_io_desc[gpio_num].slpoe);
@@ -332,7 +330,7 @@ static inline void rtcio_ll_in_sleep_disable_output(gpio_num_t gpio_num)
  *
  * @param rtcio_num The index of rtcio. 0 ~ MAX(rtcio).
  */
-static inline void rtcio_ll_in_sleep_enable_input(gpio_num_t gpio_num)
+static inline void rtcio_ll_enable_input_in_sleep(gpio_num_t gpio_num)
 {
     SET_PERI_REG_MASK(rtc_io_desc[gpio_num].reg, rtc_io_desc[gpio_num].slpie);
 }
@@ -342,7 +340,7 @@ static inline void rtcio_ll_in_sleep_enable_input(gpio_num_t gpio_num)
  *
  * @param rtcio_num The index of rtcio. 0 ~ MAX(rtcio).
  */
-static inline void rtcio_ll_in_sleep_disable_input(gpio_num_t gpio_num)
+static inline void rtcio_ll_disable_input_in_sleep(gpio_num_t gpio_num)
 {
     CLEAR_PERI_REG_MASK(rtc_io_desc[gpio_num].reg, rtc_io_desc[gpio_num].slpie);
 }
@@ -367,6 +365,12 @@ static inline void rtcio_ll_disable_sleep_setting(gpio_num_t gpio_num)
     CLEAR_PERI_REG_MASK(rtc_io_desc[gpio_num].reg, rtc_io_desc[gpio_num].slpsel);
 }
 
+/**
+ * Set specific logic level on an RTC IO pin as a wakeup trigger.
+ *
+ * @param rtcio_num The index of rtcio. 0 ~ MAX(rtcio).
+ * @param level Logic level (0)
+ */
 static inline void rtcio_ll_ext0_set_wakeup_pin(int rtcio_num, int level)
 {
     REG_SET_FIELD(RTC_IO_EXT_WAKEUP0_REG, RTC_IO_EXT_WAKEUP0_SEL, rtcio_num);

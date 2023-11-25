@@ -1300,7 +1300,7 @@ ork.*/
 #define RTC_CNTL_ANA_CLK_RTC_SEL_V  0x3
 #define RTC_CNTL_ANA_CLK_RTC_SEL_S  30
 /* RTC_CNTL_FAST_CLK_RTC_SEL : R/W ;bitpos:[29] ;default: 1'b0 ; */
-/*description: fast_clk_rtc sel. 0: XTAL div 4.*/
+/*description: fast_clk_rtc sel. 0: XTAL div 2.*/
 #define RTC_CNTL_FAST_CLK_RTC_SEL    (BIT(29))
 #define RTC_CNTL_FAST_CLK_RTC_SEL_M  (BIT(29))
 #define RTC_CNTL_FAST_CLK_RTC_SEL_V  0x1
@@ -1796,12 +1796,6 @@ ork.*/
 #define RTC_CNTL_DG_PERI_PD_EN_M  (BIT(28))
 #define RTC_CNTL_DG_PERI_PD_EN_V  0x1
 #define RTC_CNTL_DG_PERI_PD_EN_S  28
-/* RTC_CNTL_BT_PD_EN : R/W ;bitpos:[27] ;default: 0 ; */
-/*description: enable power down internal SRAM 2 in sleep.*/
-#define RTC_CNTL_BT_PD_EN    (BIT(27))
-#define RTC_CNTL_BT_PD_EN_M  (BIT(27))
-#define RTC_CNTL_BT_PD_EN_V  0x1
-#define RTC_CNTL_BT_PD_EN_S  27
 /* RTC_CNTL_CPU_TOP_FORCE_PU : R/W ;bitpos:[22] ;default: 1'd1 ; */
 /*description: digital dcdc force power up.*/
 #define RTC_CNTL_CPU_TOP_FORCE_PU    (BIT(22))
@@ -3577,7 +3571,7 @@ ork.*/
 #define RTC_CNTL_FIB_SEL_S  0
 
 #define RTC_CNTL_FIB_GLITCH_RST BIT(0)
-#define RTC_CNTL_FIB_BOR_RST BIT(1)
+#define RTC_CNTL_FIB_BOD_RST BIT(1)
 #define RTC_CNTL_FIB_SUPER_WDT_RST BIT(2)
 
 #define RTC_CNTL_TOUCH_DAC_REG          (DR_REG_RTCCNTL_BASE + 0x14C)

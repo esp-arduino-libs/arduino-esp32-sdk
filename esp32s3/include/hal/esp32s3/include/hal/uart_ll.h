@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2015-2023 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2015-2022 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include "hal/misc.h"
 #include "hal/uart_types.h"
 #include "soc/uart_periph.h"
@@ -118,45 +119,27 @@ FORCE_INLINE_ATTR void uart_ll_get_sclk(uart_dev_t *hw, uart_sclk_t *source_clk)
 }
 
 /**
- * @brief  Get the UART source clock frequency.
- *
- * @param  hw Beginning address of the peripheral registers.
- *
- * @return Current source clock frequency
- */
-FORCE_INLINE_ATTR uint32_t uart_ll_get_sclk_freq(uart_dev_t *hw)
-{
-    switch (hw->clk_conf.sclk_sel) {
-        default:
-        case 1:
-            return APB_CLK_FREQ;
-        case 2:
-            return RTC_CLK_FREQ;
-        case 3:
-            return XTAL_CLK_FREQ;
-    }
-}
-
-/**
  * @brief  Configure the baud-rate.
  *
  * @param  hw Beginning address of the peripheral registers.
  * @param  baud The baud rate to be set.
+ * @param  sclk_freq Frequency of the clock source of UART, in Hz.
  *
  * @return None
  */
-FORCE_INLINE_ATTR void uart_ll_set_baudrate(uart_dev_t *hw, uint32_t baud)
+FORCE_INLINE_ATTR void uart_ll_set_baudrate(uart_dev_t *hw, uint32_t baud, uint32_t sclk_freq)
 {
 #define DIV_UP(a, b)    (((a) + (b) - 1) / (b))
-    uint32_t sclk_freq = uart_ll_get_sclk_freq(hw);
     const uint32_t max_div = BIT(12) - 1;   // UART divider integer part only has 12 bits
-    int sclk_div = DIV_UP(sclk_freq, max_div * baud);
+    uint32_t sclk_div = DIV_UP(sclk_freq, (uint64_t)max_div * baud);
+
+    if (sclk_div == 0) abort();
 
     uint32_t clk_div = ((sclk_freq) << 4) / (baud * sclk_div);
     // The baud rate configuration register is divided into
     // an integer part and a fractional part.
     hw->clkdiv.clkdiv = clk_div >> 4;
-    hw->clkdiv.clkdiv_frag = clk_div &  0xf;
+    hw->clkdiv.clkdiv_frag = clk_div & 0xf;
     HAL_FORCE_MODIFY_U32_REG_FIELD(hw->clk_conf, sclk_div_num, sclk_div - 1);
 #undef DIV_UP
 }
@@ -165,12 +148,12 @@ FORCE_INLINE_ATTR void uart_ll_set_baudrate(uart_dev_t *hw, uint32_t baud)
  * @brief  Get the current baud-rate.
  *
  * @param  hw Beginning address of the peripheral registers.
+ * @param  sclk_freq Frequency of the clock source of UART, in Hz.
  *
  * @return The current baudrate
  */
-FORCE_INLINE_ATTR uint32_t uart_ll_get_baudrate(uart_dev_t *hw)
+FORCE_INLINE_ATTR uint32_t uart_ll_get_baudrate(uart_dev_t *hw, uint32_t sclk_freq)
 {
-    uint32_t sclk_freq = uart_ll_get_sclk_freq(hw);
     uart_clkdiv_reg_t div_reg;
     div_reg.val = hw->clkdiv.val;
     return ((sclk_freq << 4)) /
@@ -982,6 +965,18 @@ FORCE_INLINE_ATTR void uart_ll_force_xon(uart_port_t uart_num)
 FORCE_INLINE_ATTR uint32_t uart_ll_get_fsm_status(uart_port_t uart_num)
 {
     return REG_GET_FIELD(UART_FSM_STATUS_REG(uart_num), UART_ST_UTX_OUT);
+}
+
+/**
+ * @brief  Configure UART whether to discard when receiving wrong data
+ *
+ * @param  hw Beginning address of the peripheral registers.
+ * @param  discard true: Receiver stops storing data into FIFO when data is wrong
+ *                false: Receiver continue storing data into FIFO when data is wrong
+ */
+FORCE_INLINE_ATTR void uart_ll_discard_error_data(uart_dev_t *hw, bool discard)
+{
+    hw->conf0.err_wr_mask = discard ? 1 : 0;
 }
 
 #ifdef __cplusplus

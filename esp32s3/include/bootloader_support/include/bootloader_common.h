@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2018-2021 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2018-2022 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,20 +7,6 @@
 #pragma once
 #include "esp_flash_partitions.h"
 #include "esp_image_format.h"
-#include "esp_app_format.h"
-// [refactor-todo]: we shouldn't expose ROM header files in a public API header, remove them in v5.0
-// Tracked in IDF-1968
-#if CONFIG_IDF_TARGET_ESP32
-#include "esp32/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32S2
-#include "esp32s2/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32S3
-#include "esp32s3/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32C3
-#include "esp32c3/rom/rtc.h"
-#elif CONFIG_IDF_TARGET_ESP32H2
-#include "esp32h2/rom/rtc.h"
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -120,15 +106,6 @@ bool bootloader_common_label_search(const char *list, char *label);
 void bootloader_configure_spi_pins(int drv);
 
 /**
- * @brief Get flash CS IO
- *
- * Can be determined by eFuse values, or the default value
- *
- * @return Flash CS IO
- */
-uint8_t bootloader_flash_get_cs_io(void);
-
-/**
  * @brief Calculates a sha-256 for a given partition or returns a appended digest.
  *
  * This function can be used to return the SHA-256 digest of application, bootloader and data partitions.
@@ -174,33 +151,11 @@ int bootloader_common_get_active_otadata(esp_ota_select_entry_t *two_otadata);
 int bootloader_common_select_otadata(const esp_ota_select_entry_t *two_otadata, bool *valid_two_otadata, bool max);
 
 /**
- * @brief Returns esp_app_desc structure for app partition. This structure includes app version.
- *
- * Returns a description for the requested app partition.
- * @param[in] partition      App partition description.
- * @param[out] app_desc      Structure of info about app.
- * @return
- *  - ESP_OK:                Successful.
- *  - ESP_ERR_INVALID_ARG:   The arguments passed are not valid.
- *  - ESP_ERR_NOT_FOUND:     app_desc structure is not found. Magic word is incorrect.
- *  - ESP_FAIL:              mapping is fail.
- */
-esp_err_t bootloader_common_get_partition_description(const esp_partition_pos_t *partition, esp_app_desc_t *app_desc);
-
-/**
  * @brief Get chip package
  *
  * @return Chip package number
  */
 uint32_t bootloader_common_get_chip_ver_pkg(void);
-
-/**
- * @brief Query reset reason
- *
- * @param cpu_no CPU number
- * @return reset reason enumeration
- */
-RESET_REASON bootloader_common_get_reset_reason(int cpu_no);
 
 /**
  * @brief Check if the image (bootloader and application) has valid chip ID and revision
@@ -218,7 +173,7 @@ esp_err_t bootloader_common_check_chip_validity(const esp_image_header_t* img_hd
  */
 void bootloader_common_vddsdio_configure(void);
 
-#if defined( CONFIG_BOOTLOADER_SKIP_VALIDATE_IN_DEEP_SLEEP ) || defined( CONFIG_BOOTLOADER_CUSTOM_RESERVE_RTC )
+#if CONFIG_BOOTLOADER_RESERVE_RTC_MEM
 /**
  * @brief Returns partition from rtc_retain_mem
  *
@@ -269,6 +224,21 @@ void bootloader_common_reset_rtc_retain_mem(void);
 uint16_t bootloader_common_get_rtc_retain_mem_reboot_counter(void);
 
 /**
+ * @brief Returns True if Factory reset has happened
+ *
+ * Reset the status after reading it.
+ *
+ * @return True: Factory reset has happened
+ *         False: No Factory reset
+ */
+bool bootloader_common_get_rtc_retain_mem_factory_reset_state(void);
+
+/**
+ * @brief Sets Factory reset status
+ */
+void bootloader_common_set_rtc_retain_mem_factory_reset_state(void);
+
+/**
  * @brief Returns rtc_retain_mem
  *
  * Note: This function operates the RTC FAST memory which available only for PRO_CPU.
@@ -278,7 +248,7 @@ uint16_t bootloader_common_get_rtc_retain_mem_reboot_counter(void);
  */
 rtc_retain_mem_t* bootloader_common_get_rtc_retain_mem(void);
 
-#endif
+#endif // CONFIG_BOOTLOADER_RESERVE_RTC_MEM
 
 #ifdef __cplusplus
 }

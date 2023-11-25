@@ -1,16 +1,8 @@
-// Copyright 2015-2019 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * SPDX-FileCopyrightText: 2015-2021 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 // The LL layer for Timer Group register operations.
 // Note that most of the register operations in this layer are non-atomic operations.
@@ -27,8 +19,12 @@ extern "C" {
 #include "soc/timer_periph.h"
 #include "soc/timer_group_struct.h"
 #include "hal/wdt_types.h"
+#include "hal/assert.h"
 #include "esp_attr.h"
 #include "esp_assert.h"
+
+/* Pre-calculated prescaler to achieve 500 ticks/us (MWDT1_TICKS_PER_US) when using default clock (MWDT_CLK_SRC_DEFAULT ) */
+#define MWDT_LL_DEFAULT_CLK_PRESCALER 40000
 
 /* The value that needs to be written to MWDT_LL_WKEY to write-enable the wdt registers */
 #define MWDT_LL_WKEY_VALUE 0x50D83AA1
@@ -126,6 +122,7 @@ FORCE_INLINE_ATTR void mwdt_ll_config_stage(timg_dev_t *hw, wdt_stage_t stage, u
         hw->wdtconfig5.wdt_stg3_hold = timeout;
         break;
     default:
+        HAL_ASSERT(false && "unsupported WDT stage");
         break;
     }
 }
@@ -152,6 +149,7 @@ FORCE_INLINE_ATTR void mwdt_ll_disable_stage(timg_dev_t *hw, uint32_t stage)
         hw->wdtconfig0.wdt_stg3 = WDT_STAGE_ACTION_OFF;
         break;
     default:
+        HAL_ASSERT(false && "unsupported WDT stage");
         break;
     }
 }
@@ -278,6 +276,35 @@ FORCE_INLINE_ATTR void mwdt_ll_clear_intr_status(timg_dev_t *hw)
 FORCE_INLINE_ATTR void mwdt_ll_set_intr_enable(timg_dev_t *hw, bool enable)
 {
     hw->int_ena_timers.wdt_int_ena = (enable) ? 1 : 0;
+}
+
+/**
+ * @brief Set the clock source for the MWDT.
+ *
+ * @param hw Beginning address of the peripheral registers.
+ * @param clk_src Clock source
+ */
+FORCE_INLINE_ATTR void mwdt_ll_set_clock_source(timg_dev_t *hw, mwdt_clock_source_t clk_src)
+{
+    /* No clk source option on S3, always use APB as clock source */
+    (void)hw;
+    (void)clk_src;
+
+    HAL_ASSERT(clk_src == MWDT_CLK_SRC_APB);
+}
+
+/**
+ * @brief Enable MWDT module clock
+ *
+ * @param hw Beginning address of the peripheral registers.
+ * @param en true to enable, false to disable
+ */
+__attribute__((always_inline))
+static inline void mwdt_ll_enable_clock(timg_dev_t *hw, bool en)
+{
+    /* No MWDT specific clock bit on ESP32S3 */
+    (void)hw;
+    (void)en;
 }
 
 #ifdef __cplusplus
