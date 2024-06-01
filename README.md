@@ -10,6 +10,10 @@ In comparison to the original arduino-esp32 SDK, this repository makes adjustmen
 
 The SDKs in the `debug` folder change the default log level to **DEBUG** by enabling `CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y` and `CONFIG_BOOTLOADER_LOG_LEVEL_INFO=y`. This increases the number of log messages printed to the serial console to aid in debugging applications.
 
+* **esp32-2.0.13-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-2.0.13-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-2.0.13-d.tar.xz))
+* **esp32-3.0.0-alpha3-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.0-alpha3-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-alpha3-d.tar.xz))
+* **esp32-3.0.0-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.0-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-d.tar.xz))
+
 **Important Note**: The SDKs with the "-d" suffix are only for debugging. For production purposes, please use the [official releases](https://github.com/espressif/arduino-esp32/releases) of arduino-esp32.
 
 ### For SDKs suffixed with "-h"
@@ -22,6 +26,9 @@ The SDKs in the `high_perf` folder change some configurations and can achieve hi
         * It increases the size of the data cache line from `32` to `64` by enabling `CONFIG_ESP32S3_DATA_CACHE_LINE_64B=y`.
     * For ESP32-S3R8 (Octal PSRAM):
         * It enables the function **XIP on PSRAM** by enabling `CONFIG_SPIRAM_FETCH_INSTRUCTIONS=y` and `CONFIG_SPIRAM_RODATA=y`.
+
+* **esp32-3.0.0-alpha3-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.0-alpha3-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-alpha3-h.tar.xz))
+* **esp32-3.0.0-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.0-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-h.tar.xz))
 
 ## How to Use
 
