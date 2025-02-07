@@ -25,14 +25,24 @@ The SDKs in the `high_perf` folder change some configurations and can achieve hi
   * For ESP32-S3 SoCs:
     * All:
         * It changes the optimization level from `-Os` to `-O2` by enabling `CONFIG_COMPILER_OPTIMIZATION_PERF=y`.
-        * It increases the size of the data cache line from `32` to `64` by enabling `CONFIG_ESP32S3_DATA_CACHE_LINE_64B=y`.
+        * It increases the size of the data cache line width from `32` to `64` by enabling `CONFIG_ESP32S3_DATA_CACHE_LINE_64B=y`.
     * For ESP32-S3R8 (Octal PSRAM):
-        * It enables the function **XIP on PSRAM** by enabling `CONFIG_SPIRAM_FETCH_INSTRUCTIONS=y` and `CONFIG_SPIRAM_RODATA=y`.
+        * It enables the function **XIP on PSRAM** by enabling `CONFIG_SPIRAM_FETCH_INSTRUCTIONS=y` and `CONFIG_SPIRAM_RODATA=y` (< v3.1.1).
+        * It enables the function **XIP on PSRAM** by enabling `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` (>= v3.1.1).
+
+  * For ESP32-P4 SoCs:
+    * All:
+      * It increases the size of the L2 cache line width from `64` to `128` by enabling `CONFIG_CACHE_L2_CACHE_LINE_128B=y`.
+      * It increases the size of the L2 cache line size from `128KB` to `256KB` by enabling `CONFIG_CACHE_L2_CACHE_256KB=y`.
 
 * **esp32-3.0.0-alpha3-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.0-alpha3-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-alpha3-h.tar.xz))
 * **esp32-3.0.0-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.0-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-h.tar.xz))
 * **esp32-3.0.2-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.2-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.2-h.tar.xz))
 * **esp32-3.0.3-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.3-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.3-h.tar.xz))
+* **esp32-3.1.1-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.1.1-h.zip?download=) / [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip))
+
+> [!WARNING]
+> For the ESP32-P4 in version v3.1.1, enabling `CONFIG_COMPILER_OPTIMIZATION_PERF=y` and `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` will cause the chip to fail to boot properly.
 
 ## How to Use
 
