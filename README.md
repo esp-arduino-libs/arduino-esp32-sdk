@@ -15,7 +15,7 @@ The SDKs in the `debug` folder change the default log level to **DEBUG** by enab
 * **esp32-3.0.0-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.0-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-d.tar.xz))
 * **esp32-3.0.2-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.2-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.2-d.tar.xz))
 * **esp32-3.0.3-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.3-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.3-d.tar.xz))
-* **esp32-3.0.3-d** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-d.zip))
+* **esp32-3.1.1-d** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-d.zip))
 
 **Important Note**: The SDKs with the "-d" suffix are only for debugging. For production purposes, please use the [official releases](https://github.com/espressif/arduino-esp32/releases) of arduino-esp32.
 
