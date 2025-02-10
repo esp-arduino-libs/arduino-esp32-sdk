@@ -53,9 +53,21 @@ To use the SDKs from this repository in the Arduino IDE, follow these steps:
 2. Ensure that the version of arduino-esp32 matches the version of the released SDKs in this repository.
 3. If yes, download the released SDKs from this repository and replace the corresponding libraries in the arduino-esp32 SDK:
     * Step 1: Find the default root path of the arduino-esp32 SDK. It should be different for different operating systems:
-        * For Windows, the default path is `C:\Users\<user name>\AppData\Local\Arduino15\packages\esp32`.
-        * For Linux, the default path is `~/.arduino15/packages/esp32`.
+        * For **Windows**, the default path is `C:\Users\<user name>\AppData\Local\Arduino15\packages\esp32`.
+        * For **Linux**, the default path is `~/.arduino15/packages/esp32`.
+        * For **MacOS**, the default path is `~/Library/Arduino15/packages/esp32`.
     * Step 2: Find the default path of the SDK libraries. It should be different for different versions of arduino-esp32:
         * For arduino-esp32 `v2.x.x`, the default path is `hardware > esp32 > 2.x.x > tools > sdk`.
         * For arduino-esp32 `v3.x.x`, the default path is `tools > esp32-arduino-libs > idf-release_x`.
+    * Step 3: The structure of the SDK libraries should be as follows, replace them with the libraries extracted from the downloaded SDK:
+      ```
+      idf-release_x
+      ├── esp32
+      ├── esp32c3
+      ├── esp32c6
+      ├── ...
+      ├── packages.json
+      ├── tools.json
+      ├── versions.txt
+      ```
 4. If not, open an issue in this repository to request a new release or refer to the [documentation](https://docs.espressif.com/projects/arduino-esp32/en/latest/lib_builder.html) for compilation instructions.
