@@ -6,6 +6,20 @@ This repository hosts specially recompiled libraries for the [arduino-esp32](htt
 
 In comparison to the original arduino-esp32 SDK, this repository makes adjustments to certain sdkconfig configurations before compilation. If you need to change more configurations, you can modify the files in the *configs* folder of [esp-arduino-libs/esp32-arduino-lib-builder](https://github.com/esp-arduino-libs/esp32-arduino-lib-builder) and refer to its README for compilation details.
 
+For SDKs marked with `PlatformIO Support`, they can be used directly in PlatformIO. Taking `esp32-3.1.1-h` as an example, you just need to add the following content to the `platformio.ini` file (Replace the download link to use other SDK versions):
+
+```ini
+platform_packages =
+  platformio/framework-arduinoespressif32-libs@https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip
+```
+
+### For SDKs without suffixes
+
+The SDKs without suffixes are the default SDKs, they don't have any special configuration changes.
+
+* **esp32-3.1.1** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1.zip)) (PlatformIO Support)
+* **esp32-3.0.7** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.0.7.zip)) (PlatformIO Support)
+
 ### For SDKs suffixed with "-d"
 
 The SDKs in the `debug` folder change the default log level to **DEBUG** by enabling `CONFIG_LOG_DEFAULT_LEVEL_DEBUG=y` and `CONFIG_BOOTLOADER_LOG_LEVEL_INFO=y`. This increases the number of log messages printed to the serial console to aid in debugging applications.
@@ -15,9 +29,11 @@ The SDKs in the `debug` folder change the default log level to **DEBUG** by enab
 * **esp32-3.0.0-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.0-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-d.tar.xz))
 * **esp32-3.0.2-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.2-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.2-d.tar.xz))
 * **esp32-3.0.3-d** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/debug/esp32-3.0.3-d.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.3-d.tar.xz))
-* **esp32-3.1.1-d** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-d.zip))
+* **esp32-3.0.7-d** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.0.7-d.zip)) (PlatformIO Support)
+* **esp32-3.1.1-d** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-d.zip)) (PlatformIO Support)
 
-**Important Note**: The SDKs with the "-d" suffix are only for debugging. For production purposes, please use the [official releases](https://github.com/espressif/arduino-esp32/releases) of arduino-esp32.
+> [!WARNING]
+> The SDKs with the "-d" suffix are only for debugging. For production purposes, please use the [official releases](https://github.com/espressif/arduino-esp32/releases) of arduino-esp32.
 
 ### For SDKs suffixed with "-h"
 
@@ -40,7 +56,8 @@ The SDKs in the `high_perf` folder change some configurations and can achieve hi
 * **esp32-3.0.0-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.0-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.0-h.tar.xz))
 * **esp32-3.0.2-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.2-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.2-h.tar.xz))
 * **esp32-3.0.3-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.3-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.3-h.tar.xz))
-* **esp32-3.1.1-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.1.1-h.zip?download=) / [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip))
+* **esp32-3.0.7-h** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.0.7-h.zip)) (PlatformIO Support)
+* **esp32-3.1.1-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.1.1-h.zip?download=) / [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip)) (PlatformIO Support)
 
 > [!WARNING]
 > For the ESP32-P4 in version v3.1.1, enabling `CONFIG_COMPILER_OPTIMIZATION_PERF=y` and `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` will cause the chip to fail to boot properly.
