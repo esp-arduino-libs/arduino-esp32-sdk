@@ -52,10 +52,11 @@
 * **esp32-3.0.2-h**（下载链接：[Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.2-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.2-h.tar.xz)）
 * **esp32-3.0.3-h**（下载链接：[Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.3-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.3-h.tar.xz)）
 * **esp32-3.0.7-h**（下载链接：[Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.0.7-h.zip)）（支持 PlatformIO）
-* **esp32-3.1.1-h**（下载链接：[Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.1.1-h.zip?download=) / [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip)）（支持 PlatformIO）
+* **esp32-3.1.1-h**（下载链接：[Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip)）（支持 PlatformIO）
+* **esp32-3.2.0-h**（下载链接：[Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.2.0-h.zip)）（支持 PlatformIO）
 
 > [!WARNING]
-> 对于 v3.1.1 版本的 ESP32-P4，启用 `CONFIG_COMPILER_OPTIMIZATION_PERF=y` 和 `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` 会导致芯片无法正常启动。
+> 对于 v3.1.1 以上版本的 ESP32-P4，启用 `CONFIG_COMPILER_OPTIMIZATION_PERF=y` 和 `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` 会导致芯片无法正常启动。
 
 ## 如何使用
 

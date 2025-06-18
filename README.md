@@ -52,10 +52,11 @@ The SDKs suffixed with "-h" change some configurations and can achieve higher pe
 * **esp32-3.0.2-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.2-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.2-h.tar.xz))
 * **esp32-3.0.3-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.0.3-h.tar.xz?download=) / [Espressif](https://dl.espressif.com/AE/esp-dev-kits/esp32-3.0.3-h.tar.xz))
 * **esp32-3.0.7-h** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.0.7-h.zip)) (PlatformIO Support)
-* **esp32-3.1.1-h** (Download Link: [Github](https://github.com/esp-arduino-libs/arduino-esp32-sdk/raw/master/high_perf/esp32-3.1.1-h.zip?download=) / [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip)) (PlatformIO Support)
+* **esp32-3.1.1-h** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.1.1-h.zip)) (PlatformIO Support)
+* **esp32-3.2.0-h** (Download Link: [Espressif](https://dl.espressif.com/AE/esp-arduino-libs/esp32-3.2.0-h.zip)) (PlatformIO Support)
 
 > [!WARNING]
-> For the ESP32-P4 in version v3.1.1, enabling `CONFIG_COMPILER_OPTIMIZATION_PERF=y` and `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` will cause the chip to fail to boot properly.
+> For the ESP32-P4 in version v3.1.1 and above, enabling `CONFIG_COMPILER_OPTIMIZATION_PERF=y` and `CONFIG_SPIRAM_XIP_FROM_PSRAM=y` will cause the chip to fail to boot properly.
 
 ## How to Use
 
